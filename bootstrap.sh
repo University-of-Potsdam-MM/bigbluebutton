@@ -33,14 +33,14 @@ sudo apt-get update
 sudo apt-get install --fix-missing -y -q --force-yes bigbluebutton
 sudo apt-get install --fix-missing -y -q --force-yes bigbluebutton
 
-current_ip = $(ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/')
+current_ip=$(ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/')
+
+sudo apt-get install --fix-missing -y -q bbb-demo
 
 sudo bbb-conf --setip ${current_ip}
 
 sudo rm /etc/nginx/sites-enabled/default
 sudo /etc/init.d/nginx restart
-
-sudo apt-get install --fix-missing -y -q bbb-demo
 
 sudo bbb-conf --clean
 sudo bbb-conf --check
