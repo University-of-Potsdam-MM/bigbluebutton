@@ -1,0 +1,12 @@
+.settings/org.eclipse.core.resources.prefs
+linker-report.xml
+bundles.txt
+build/
+bin/
+bin-debug/
+client/
+locale/.tx/
+bbbResources.properties.*
+asdoc/
+hs_err_pid*
+html-templateBackup/
