@@ -28,4 +28,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.ssh.forward_agent = true
   config.vm.provision :shell, :path => "bootstrap.sh"
   config.vm.provision :shell, :path => "bootstrap.sh"
+  
+  config.vm.provision :shell, :path => "devEnv.sh"
+  config.vm.provision :shell, :path => "testBuild.sh"
 end
