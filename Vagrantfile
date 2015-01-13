@@ -13,7 +13,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # config.vm.box_url = "http://files.vagrantup.com/ubuntu/trusty64.box"
   config.vm.provider "virtualbox" do |vb|
     vb.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/vagrant-root", "1"]
-    vb.memory = 4096
+    vb.memory = 2048
     vb.cpus = 2
     #vb.gui = true
   end
@@ -29,6 +29,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision :shell, :path => "bootstrap.sh"
   config.vm.provision :shell, :path => "bootstrap.sh"
   
-  config.vm.provision :shell, :path => "devEnv.sh"
-  config.vm.provision :shell, :path => "testBuild.sh"
+  config.vm.provision :shell, :privileged => false, :path => "devEnv.sh"
+  config.vm.provision :shell, :privileged => false, :path => "testBuild.sh"
+  
 end
