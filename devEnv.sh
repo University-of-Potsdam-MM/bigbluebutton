@@ -42,8 +42,8 @@ export FLEX_HOME=/vagrant/tools/flex
 export GRADLE_HOME=/vagrant/tools/gradle-0.8
 export PATH=$PATH:/vagrant/tools/gradle-0.8/bin:/vagrant/tools/groovy-1.6.5/bin:/vagrant/tools/flex/bin:/vagrant/tools/grails-1.3.9/bin
 export JAVA_HOME=/usr/lib/jvm/java-6-openjdk-amd64
-export ANT_OPTS='-Xmx512m -XX:MaxPermSize=512m'" | sudo tee -a ~/.bashrc
-source ~/.bashrc
+export ANT_OPTS='-Xmx512m -XX:MaxPermSize=512m'" | sudo tee -a ~/.profile ~/.bashrc
+source ~/.profile
 
 # sudo touch /etc/profile.d/pathsetup.sh
 # echo "export PATH=$PATH:$GRADLE_HOME/bin:$GROOVY_HOME/bin:$FLEX_HOME/bin:$GRAILS_HOME/bin" | sudo tee -a /etc/profile.d/pathsetup.sh
