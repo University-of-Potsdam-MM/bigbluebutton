@@ -22,6 +22,8 @@
 	<property name="BBB_MAIN" value="BigBlueButton" />
 	<property name="BROADCAST" value="BroadcastModule" />
 	<property name="CHAT" value="ChatModule" />
+	<!-- Example Chat Module-->
+	<property name="EXAMPLE_CHAT" value="ExampleChatModule" />
 	<property name="PRESENT" value="PresentModule" />
 	<property name="DESKSHARE" value="DeskShareModule" />
 	<property name="DESKSHARE_SA" value="DeskshareStandalone" />
@@ -197,6 +199,11 @@
 		<build-module src="${SRC_DIR}" target="${CHAT}" />
 	</target>
   
+	<!-- Example Chat Module-->
+	<target name="build-example-chat" description="Compile Example Chat Module">
+	<build-module src="${SRC_DIR}" target="${EXAMPLE_CHAT}" />
+	</target> 
+	
   <target name="build-notes" description="Compile Notes Module">
     <build-module src="${SRC_DIR}" target="${NOTES}" />
   </target>
@@ -281,12 +288,15 @@
 	</target>
 	
 	<!-- just a grouping of modules to compile -->
+	<!-- Example Chat Module-->
 	<target name="build-main-chat-present" 
-			depends="build-bbb-main, build-chat, build-present, build-layout, build-broadcast, build-users"
+			depends="build-bbb-main, build-chat, build-present, build-layout, build-broadcast, build-users, build-example-chat" 
 			description="Compile main, chat, present modules">
 	</target>
 	
 	<!-- just a grouping of modules to compile -->
+	<!-- Example Chat Module-->
+	<target name="build-custom-chat" depends="init-ant-contrib, build-example-chat" description="Build the ExampleChatModule only to reduce build time" /> 
 	<target name="build-deskshare-phone-video-whiteboard-dyn" 
 			depends="build-deskshare, build-phone, build-video, build-videodock, build-whiteboard, build-notes, build-polling"
 			description="Compile deskshare, phone, video, whiteboard modules">

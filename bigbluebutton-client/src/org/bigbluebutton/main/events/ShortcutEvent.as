@@ -41,6 +41,7 @@ package org.bigbluebutton.main.events {
 		public static const GOFIRST_MESSAGE:String = 'GOFIRST_MESSAGE';
 		public static const GOREAD_MESSAGE:String = 'GOREAD_MESSAGE';
 		public static const OPEN_SHORTCUT_WIN:String = 'OPEN_SHORTCUT_WIN';
+		public static const OPEN_ADJUSTMENTS_WIN:String = 'OPEN_ADJUSTMENTS_WIN';
 		
 		public static const FOCUS_USERS_WINDOW:String = 'FOCUS_USERS_WINDOW';
 		public static const FOCUS_VIDEO_WINDOW:String = 'FOCUS_VIDEO_WINDOW';
