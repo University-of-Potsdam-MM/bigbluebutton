@@ -115,6 +115,7 @@ var MEETINGID = params['meetingId'];
 var RECORDINGS = "/presentation/" + MEETINGID;
 var SLIDES_XML = RECORDINGS + '/slides_new.xml';
 var SHAPES_SVG = RECORDINGS + '/shapes.svg';
+var NOTES_XML = RECORDINGS + '/notes.xml';
 
 /*
  * Sets the title attribute in a thumbnail.
@@ -334,8 +335,7 @@ load_video = function(){
    time_manager.on( "timeupdate", function() {
     pc_webcam.currentTime( this.currentTime() );
    });*/
-
-   video.setAttribute('data-timeline-sources', SLIDES_XML);    
+   video.setAttribute('data-timeline-sources', SLIDES_XML+", "+NOTES_XML);    
    //video.setAttribute('controls','');
    //leave auto play turned off for accessiblity support
    //video.setAttribute('autoplay','autoplay');
@@ -368,8 +368,7 @@ load_audio = function() {
       audio.appendChild(webmsource);
       audio.appendChild(oggsource);
    }
-
-   audio.setAttribute('data-timeline-sources', SLIDES_XML);
+   audio.setAttribute('data-timeline-sources', SLIDES_XML+", "+NOTES_XML);
    //audio.setAttribute('controls','');
    //leave auto play turned off for accessiblity support
    //audio.setAttribute('autoplay','autoplay');

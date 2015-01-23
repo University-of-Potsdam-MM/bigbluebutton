@@ -33,6 +33,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   <script type="text/javascript" src="playback.js"></script>
   <script type="text/javascript" src="lib/popcorn-complete.min.js"></script>
   <script type="text/javascript" src="lib/popcorn.chattimeline.js"></script>
+  <script type="text/javascript" src="lib/popcorn.notestimeline.js"></script>
   <script type="text/javascript" src="advanced_playback.js"></script>
 
   <!--script type="text/javascript">
@@ -71,7 +72,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				<input type="radio" name="chatarea_type" id="notes_cb" onchange="javascript:change_chatarea();" value="notes" /> notes
 				<label for="exposechat" class="visually-hidden">Read chat messages</label>
 				<div id="chat" aria-live="polite" role="region" aria-label="Chat messages"></div>
-				<div id="notes" aria-live="polite" role="region" aria-label="Notes" aria-hidden="true" style="height:0px"></div>
+				<div id="notes" aria-live="polite" role="region" aria-label="Notes" aria-hidden="true" style="height:0px;display: none"></div>
 				<div id="videoRecordingWrapper" role="region" aria-label="Video">
 	<!--
 				  <video id="webcam" >You must use an HTML5 capable browser to view this page.
