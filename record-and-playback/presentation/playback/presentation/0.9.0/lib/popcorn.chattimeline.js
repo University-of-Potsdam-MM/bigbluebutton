@@ -27,7 +27,6 @@
   var i = 1;
 
   Popcorn.plugin( "chattimeline" , function( options ) {
-
     var target = document.getElementById( options.target ),
         contentDiv = document.createElement( "div" ),
         goingUp = true;
@@ -35,6 +34,7 @@
     contentDiv.style.display = "none";
     contentDiv.setAttribute('aria-hidden', true);
     contentDiv.id = "timelineDiv" + i;
+    contentDiv.onclick = function() {goToSlide(options.start);Popcorn('#video').pause();};
 
     //  Default to up if options.direction is non-existant or not up or down
     options.direction = options.direction || "up";
@@ -42,8 +42,7 @@
 
       goingUp = false;
     }
-
-    if ( target ) {
+    if ( target ) { 
       // if this isnt the first div added to the target div
       if( goingUp ){
         // insert the current div before the previous div inserted

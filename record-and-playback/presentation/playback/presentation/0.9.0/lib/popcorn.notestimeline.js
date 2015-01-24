@@ -34,6 +34,7 @@
     contentDiv.style.display = "none";
     contentDiv.setAttribute('aria-hidden', true);
     contentDiv.id = "notesTimelineDiv" + i;
+    contentDiv.onclick = function() {goToSlide(options.start);Popcorn('#video').pause();};
     
     //  Default to up if options.direction is non-existant or not up or down
     options.direction = options.direction || "up";
