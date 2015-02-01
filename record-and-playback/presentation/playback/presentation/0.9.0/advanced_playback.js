@@ -1,4 +1,6 @@
+var USER_NOTES_XML = "";
 var chatAndMedia_height;
+var PUBLIC_NOTES_EXIST;
 
 function change_chatarea()
 {
@@ -31,7 +33,9 @@ function change_chatarea()
 			i++;
 			contentDiv = document.getElementById("timelineDiv" + i);
 		}
-		showNotes();
+		if(PUBLIC_NOTES_EXIST == true){
+			showNotes();
+		}
 	} else {
 		chat.style.backgroundColor = "blue";
 	}
@@ -86,7 +90,7 @@ function showNotes()
 			}
 		},
 		error:   function() {
-			alert("error while retrieving chat-content");
+			alert("error while retrieving notes-content");
 		}
 	});
 }
@@ -99,4 +103,14 @@ function getLastChatId(noteTimes, currentTime){
 	}
 	return j;
 }
+
+function UrlExists(url)
+{ //http://stackoverflow.com/questions/3646914/how-do-i-check-if-file-exists-in-jquery-or-javascript
+    var http = new XMLHttpRequest();
+    http.open('HEAD', url, false);
+    http.send();
+    return http.status==200;
+}
+
+PUBLIC_NOTES_EXIST = UrlExists(NOTES_XML);
 
