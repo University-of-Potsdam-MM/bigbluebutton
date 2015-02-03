@@ -1,0 +1,668 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+
+BigBlueButton open source conferencing system - http://www.bigbluebutton.org/
+
+Copyright (c) 2012 BigBlueButton Inc. and by respective authors (see below).
+
+This program is free software; you can redistribute it and/or modify it under the
+terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 3.0 of the License, or (at your option) any later
+version.
+
+BigBlueButton is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along
+with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
+
+-->
+
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" 
+	xmlns:mate="http://mate.asfusion.com/"
+  xmlns:activitylog="org.bigbluebutton.modules.activitylog.views.*"
+  implements="org.bigbluebutton.modules.activitylog.views.IActivitylogTab"
+	click="setMessageRead()" verticalScrollPolicy="off"
+	creationComplete="onCreationComplete()">
+
+  <mx:Style>
+    .activitylogColorPickerStyle {
+      backgroundColor:#E5E6E7;
+      columnCount:12;
+      horizontalGap:0;
+      previewHeight:22;
+      previewWidth:45;
+      swatchGridBackgroundColor:#000000;
+      swatchGridBorderSize:0;
+      swatchHeight:60;
+      swatchHighlightColor:#FFFFFF;
+      swatchHighlightSize:1;
+      swatchWidth:12;
+      textFieldWidth:72;
+      verticalGap:0;
+    }
+    
+  </mx:Style>
+  
+	<mate:Listener type="{ActivitylogOptionsEvent.CHANGE_FONT_SIZE}" method="changeFontSize" />
+	<mate:Listener type="{ShortcutEvent.ADVANCE_MESSAGE}" method="advanceMessage" />
+	<mate:Listener type="{ShortcutEvent.GOBACK_MESSAGE}" method="goBackOneMessage" />
+	<mate:Listener type="{ShortcutEvent.REPEAT_MESSAGE}" method="repeatMessage" />
+	<mate:Listener type="{ShortcutEvent.GOLATEST_MESSAGE}" method="goToLatestMessage" />
+	<mate:Listener type="{ShortcutEvent.GOFIRST_MESSAGE}" method="goToFirstMessage" />
+	<mate:Listener type="{ShortcutEvent.GOREAD_MESSAGE}" method="goToLatestReadMessage" />
+  <mate:Listener type="{PrivateActivitylogMessageEvent.PRIVATE_ACTIVITYLOG_MESSAGE_EVENT}" method="handlePrivateActivitylogMessageEvent"/>
+  <mate:Listener type="{PublicActivitylogMessageEvent.PUBLIC_ACTIVITYLOG_MESSAGE_EVENT}" method="handlePublicActivitylogMessageEvent"/>
+  <mate:Listener type="{ShortcutEvent.FOCUS_ACTIVITYLOG_INPUT}" method="focusActivitylogInput" />
+  <mate:Listener type="{UserLeftEvent.LEFT}" method="handleUserLeftEvent"/>
+  <mate:Listener type="{ShortcutEvent.FOCUS_ACTIVITYLOG_BOX}" method="focusActivitylogBox" />
+  <mate:Listener type="{ShortcutEvent.CHANGE_FONT_COLOUR}" method="focusColourPicker" />
+  <mate:Listener type="{ShortcutEvent.SEND_MESSAGE}" method="remoteSendMessage" />
+  <mate:Listener type="{ShortcutEvent.ACTIVITYLOG_DEBUG}" method="activitylogDebugInfo" />
+	
+	<mate:Listener type="{LockControlEvent.CHANGED_LOCK_SETTINGS}" method="lockSettingsChanged" />
+
+	<mx:Script>
+		<![CDATA[
+			import com.adobe.utils.StringUtil;
+			import com.asfusion.mate.events.Dispatcher;		
+			import flash.accessibility.AccessibilityProperties;			
+			import mx.binding.utils.BindingUtils;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Button;
+			import mx.core.ScrollPolicy;			
+			import org.bigbluebutton.common.LogUtil;
+			import org.bigbluebutton.core.UsersUtil;
+			import org.bigbluebutton.core.events.LockControlEvent;
+			import org.bigbluebutton.core.managers.UserManager;
+			import org.bigbluebutton.main.events.ShortcutEvent;
+			import org.bigbluebutton.main.events.UserLeftEvent;
+			import org.bigbluebutton.main.model.users.BBBUser;
+			import org.bigbluebutton.main.model.users.Conference;
+			import org.bigbluebutton.modules.activitylog.ActivitylogConstants;
+			import org.bigbluebutton.modules.activitylog.ActivitylogUtil;
+			import org.bigbluebutton.modules.activitylog.events.ActivitylogOptionsEvent;
+			import org.bigbluebutton.modules.activitylog.events.PrivateActivitylogMessageEvent;
+			import org.bigbluebutton.modules.activitylog.events.PublicActivitylogMessageEvent;
+			import org.bigbluebutton.modules.activitylog.events.SendPrivateActivitylogMessageEvent;
+			import org.bigbluebutton.modules.activitylog.events.SendPublicActivitylogMessageEvent;
+			import org.bigbluebutton.modules.activitylog.events.TranscriptEvent;
+			import org.bigbluebutton.modules.activitylog.model.ActivitylogConversation;
+			import org.bigbluebutton.modules.activitylog.model.ActivitylogMessage;
+			import org.bigbluebutton.modules.activitylog.model.ActivitylogOptions;
+			import org.bigbluebutton.modules.activitylog.views.ActivitylogMessageRenderer;
+			import org.bigbluebutton.modules.activitylog.vo.ActivitylogMessageVO;
+			import org.bigbluebutton.modules.activitylog.services.MessageReceiver;
+			import org.bigbluebutton.util.i18n.ResourceUtil;
+			import flash.events.IEventDispatcher;//
+
+      private static const LOG:String = "Activitylog::ActivitylogBox - ";
+      
+      public var publicActivitylog:Boolean = false;
+      public var activitylogWithUserID:String;
+      public var activitylogWithUsername:String
+      
+			public var read:Boolean = true;
+			public var userHasLeft:Boolean = false;
+			
+			private var globalDispatcher:Dispatcher = new Dispatcher();
+      [Bindable] public var colorPickerColours:Array = ['0x000000', '0x7A7A7A' ,'0xFF0000', '0xFF8800',
+        '0x88FF00', '0x00FF00', '0x00FF88', '0x00FFFF', '0x0088FF', '0x0000FF', '0x8800FF', '0xFF00FF'];
+      
+			[Bindable]
+			private var backgroundColor:uint = 0x000000;
+			private var lastSenderId:String = "";
+			private var lastTime:String = "";
+			
+	    [Bindable]
+	    private var activitylogMessages:ActivitylogConversation = new ActivitylogConversation();
+      
+			private var lastCount:Number = 0;			
+			private var scrollTimer:Timer;			
+			private var scrollBarWorkaround:Boolean = false;
+			private var currentMessage:int;
+			private var latestMessage:int; 
+			
+			private var reachedLatest:String = ResourceUtil.getInstance().getString('bbb.accessibility.activitylog.activitylogBox.reachedLatest');
+			private var reachedFirst:String = ResourceUtil.getInstance().getString('bbb.accessibility.activitylog.activitylogBox.reachedFirst');
+			private var navLatestString:String = ResourceUtil.getInstance().getString('bbb.accessibility.activitylog.activitylogBox.navigatedLatest');
+			private var navRecentString:String = ResourceUtil.getInstance().getString('bbb.accessibility.activitylog.activitylogBox.navigatedLatestRead');
+			private var navFirstString:String = ResourceUtil.getInstance().getString('bbb.accessibility.activitylog.activitylogBox.navigatedFirst');
+			
+			public var focus:Boolean = false;
+			private var keyCombos:Object;
+			
+			private var navToFirst:Boolean = false;
+			private var navToLatest:Boolean = false;
+			private var spacerNeeded:Boolean = false;
+			private var indicatorNeeded:Boolean = false
+			private var repeat:Boolean = false;
+
+			private var lastMessage:String = "";
+			
+			[Bindable]
+			public var baseIndex:int;
+			
+		      [Bindable]
+		      private var activitylogListHeight:Number = 100;
+			
+			[Bindable] public var activitylogOptions:ActivitylogOptions = new ActivitylogOptions();	
+
+			//public var receiver:MessageReceiver; // = new MessageReceiver();//
+      
+			private function onCreationComplete():void {    
+        		bindToHeightToDetermineHeightOfMessageList();
+        						
+				addContextMenuItems();
+				scrollTimer = new Timer(750, 2);
+				scrollTimer.addEventListener(TimerEvent.TIMER, onScrollTimer);
+				
+				/**
+				 * The next two lines will force the scrollbar to the end of the message when displaying the
+				 * activitylog history.
+				 */
+				callLater(scrollToBottom);	
+				scrollTimer.start();	
+				
+				// Initialize the indicator for the position in the message history, and add the listener for message history navigation
+				currentMessage = -1;
+				latestMessage = -1;
+				
+				this.addEventListener(KeyboardEvent.KEY_DOWN, handleKeyDown);	
+				
+				ResourceUtil.getInstance().addEventListener(Event.CHANGE, localeChanged); // Listen for locale changing	
+				
+		        hotkeyCapture();
+			
+		        // Listen for the ENTER key to send the message.
+		        txtMsgArea.addEventListener(KeyboardEvent.KEY_UP, handleTextAreaKeyUpEvent);
+		        
+		        queryForActivitylogHistory();
+
+		        if(activitylogMessagesList.accessibilityProperties == null)
+		        	activitylogMessagesList.accessibilityProperties = new AccessibilityProperties();
+
+				activitylogMessagesList.accessibilityProperties.description = ResourceUtil.getInstance().getString('bbb.accessibility.activitylog.initialDescription');
+				
+				if(Capabilities.hasAccessibility)
+					Accessibility.updateProperties();
+				
+        trace(LOG + " onCreationComplete. Apply lock settings");
+        applyLockSettings();
+			}
+			
+			private function focusActivitylogBox(e:ShortcutEvent):void{
+				focusManager.setFocus(activitylogMessagesList);
+				activitylogMessagesList.setFocus();//2
+		                activitylogMessagesList.drawFocus(true);//2
+			}
+			
+			private function focusColourPicker(e:ShortcutEvent):void{
+				focusManager.setFocus(cmpColorPicker);
+			}
+			
+			private function remoteSendMessage(e:ShortcutEvent):void{
+				//focusManager.setFocus(sendBtn);
+				sendMessages();
+			}
+      
+      private function bindToHeightToDetermineHeightOfMessageList():void {
+        // Need to bind to the height for this container to be able to calculate the height
+        // of the activitylog message list and text area containers. If we do just percentages,
+        // the text area won't get displayed especially when switching layouts (ralam Oct 18, 2012)
+        BindingUtils.bindSetter(handleChangeHeight, this, "height");
+      }
+      
+      private function handleChangeHeight(newHeight:Number):void {
+        // The height for this activitylog box has changed. Calculate the height of the components accordingly.
+        activitylogListHeight = newHeight - (activitylogCtrlBar.height + 10);
+      }
+      
+      private function queryForActivitylogHistory():void {
+        // Setup timer to trigger querying for public activitylog history.
+        // We have to do this to get the UI settled down. Otherwise, the text area won't show up.
+        // (ralam Oct 17, 2012)
+        historyTimer = new Timer(5000, 1);
+        historyTimer.addEventListener(TimerEvent.TIMER, loadActivitylogHistory);
+        historyTimer.start();        
+      }
+      
+      private var historyTimer:Timer;
+      
+      private function loadActivitylogHistory(event:TimerEvent):void {
+        if (publicActivitylog) {
+          var disp:Dispatcher  = new Dispatcher();
+          disp.dispatchEvent(new TranscriptEvent(TranscriptEvent.LOAD_TRANSCRIPT));	
+        }
+      }
+      
+      private function handleUserLeftEvent(event:UserLeftEvent):void {
+        // Handle user leaving so that the user won't be talking to someone not there.
+        if (!publicActivitylog && event.userID == activitylogWithUserID) {
+          displayUserHasLeftMessage();
+          txtMsgArea.enabled = false;
+          scrollToEndOfMessage();
+        }
+      }
+      
+      private var SPACE:String = " ";
+      private function displayUserHasLeftMessage():void {
+        var msg:ActivitylogMessageVO = new ActivitylogMessageVO();
+        msg.activitylogType = ActivitylogConstants.PUBLIC_ACTIVITYLOG;
+        msg.fromUserID = SPACE;
+        msg.fromUsername = SPACE;
+        msg.fromColor = "0";
+        msg.fromLang = "en";
+        msg.fromTime = new Date().getTime();
+        msg.fromTimezoneOffset = new Date().getTimezoneOffset();
+        msg.toUserID = SPACE;
+        msg.toUsername = SPACE;
+        msg.message = ResourceUtil.getInstance().getString('bbb.activitylog.private.userLeft');
+        
+        activitylogMessages.newActivitylogMessage(msg);
+      }
+          
+      public function focusToTextMessageArea():void {
+        txtMsgArea.setFocus();
+        txtMsgArea.drawFocus(true);
+      }
+			
+      private function handlePublicActivitylogMessageEvent(event:PublicActivitylogMessageEvent):void {
+        if (publicActivitylog) {
+          activitylogMessages.newActivitylogMessage(event.message);
+          scrollToEndOfMessage();
+        }
+      }
+      
+      private function handlePrivateActivitylogMessageEvent(event:PrivateActivitylogMessageEvent):void {
+        var message:ActivitylogMessageVO = event.message;
+        
+        if (!publicActivitylog && 
+          ( (message.fromUserID == activitylogWithUserID && UsersUtil.isMe(message.toUserID)) ||
+            (message.toUserID == activitylogWithUserID && UsersUtil.isMe(message.fromUserID)) )) {
+          activitylogMessages.newActivitylogMessage(event.message);
+          scrollToEndOfMessage();
+        }        
+      }
+      
+      public function handleFirstPrivateMessage(event:PrivateActivitylogMessageEvent):void {
+        handlePrivateActivitylogMessageEvent(event);
+      }
+      
+      public function scrollToEndOfMessage():void {
+        /**
+         * Trigger to force the scrollbar to show the last message.
+         */	
+        if (scrollTimer != null) scrollTimer.start();
+      }
+      
+		
+			/**
+			 * Magic sauce to force scrollbar to the bottom message. This took a lot
+			 * of trial and error. If you change this, make sure you know what you are
+			 * doing as I don't know why it works, but it does. (ralam Nov 3, 2010)
+			 */
+			private function scrollToBottom():void {
+				activitylogMessagesList.invalidateSize();
+				activitylogMessagesList.invalidateDisplayList();
+				activitylogMessagesList.validateDisplayList();
+				activitylogMessagesList.validateNow();		
+        		activitylogMessagesList.scrollToIndex(activitylogMessages.numMessages());
+			}
+			
+			private function onScrollTimer(event:TimerEvent):void {
+				scrollToBottom();
+			}
+						
+			public function setMessageUnread():void{
+				this.read = false;
+				backgroundColor = 0xFFFF00;
+			}
+			
+			public function setMessageRead():void{
+				this.read = true;
+				backgroundColor = 0x000000;
+			}
+			
+			private function onLinkClick(e:TextEvent):void {
+				var url:URLRequest = new URLRequest(e.text);
+				navigateToURL(url, '_blank');
+			}
+			
+			private function changeFontSize(e:ActivitylogOptionsEvent):void {
+				this.setStyle("fontSize", e.fontSize);
+			}
+			
+			private function addContextMenuItems():void {
+				var contextMenu:ContextMenu = new ContextMenu();
+				contextMenu.hideBuiltInItems();
+				
+				var copyAllButton:ContextMenuItem = new ContextMenuItem(ResourceUtil.getInstance().getString("bbb.activitylog.contextmenu.copyalltext"));
+				copyAllButton.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, menuItemHandler);
+				contextMenu.customItems.push(copyAllButton);
+				
+				this.contextMenu = contextMenu;
+			}
+			
+			private function menuItemHandler(e:ContextMenuEvent):void{
+				if (e.target.caption == ResourceUtil.getInstance().getString("bbb.activitylog.contextmenu.copyalltext")){
+					System.setClipboard(activitylogMessages.getAllMessageAsString());
+				}
+			}
+			
+			
+			// Determines for navigateMessages() whether the message to be spoken by the screen-reader needs an extra space added to the end or not
+			private function setDescription():Boolean{
+				var activitylogHistorySpacer:Boolean = false;
+				if (activitylogMessagesList.accessibilityProperties.description == activitylogMessages.messages.getItemAt(currentMessage).toString()) {
+		          		activitylogHistorySpacer = true;
+		        }
+				return activitylogHistorySpacer;
+			}
+			
+			public function getLatestMessage():int{
+				return latestMessage;
+			}
+			
+			public function getCurrentMessage():int{
+				return currentMessage;
+			}
+			
+			private function localeChanged(e:Event):void {
+				var modifier:String = ExternalInterface.call("determineModifier");
+		  		loadKeyCombos(modifier);
+				
+				addContextMenuItems();
+			}
+
+			private function loadKeyCombos(modifier:String):void {
+				keyCombos = new Object(); // always start with a fresh array
+				//keyCombos[modifier+(ResourceUtil.getInstance().getString('bbb.shortcutkey.activitylog.activitylogbox.debug') as String)] = ShortcutEvent.ACTIVITYLOG_DEBUG;
+				//keyCombos[modifier+(ResourceUtil.getInstance().getString('bbb.shortcutkey.activitylog.activitylogbox.repeat') as String)] = ShortcutEvent.REPEAT_MESSAGE;
+				keyCombos[modifier+(ResourceUtil.getInstance().getString('bbb.shortcutkey.activitylog.activitylogbox.goread') as String)] = ShortcutEvent.GOREAD_MESSAGE;
+				// Special cases: Using the arrow keys with no modifiers
+				keyCombos[(ResourceUtil.getInstance().getString('bbb.shortcutkey.activitylog.activitylogbox.advance') as String)] = ShortcutEvent.ADVANCE_MESSAGE;
+				keyCombos[(ResourceUtil.getInstance().getString('bbb.shortcutkey.activitylog.activitylogbox.goback') as String)] = ShortcutEvent.GOBACK_MESSAGE;
+				keyCombos[(ResourceUtil.getInstance().getString('bbb.shortcutkey.activitylog.activitylogbox.golatest') as String)] = ShortcutEvent.GOLATEST_MESSAGE;
+				keyCombos[(ResourceUtil.getInstance().getString('bbb.shortcutkey.activitylog.activitylogbox.gofirst') as String)] = ShortcutEvent.GOFIRST_MESSAGE;
+				keyCombos[(ResourceUtil.getInstance().getString('bbb.shortcutkey.activitylog.activitylogbox.repeat') as String)] = ShortcutEvent.REPEAT_MESSAGE;
+			}
+			
+			public function hotkeyCapture():void{
+			    this.addEventListener(KeyboardEvent.KEY_DOWN, handleKeyDown);
+		    }
+			
+			private function handleKeyDown(e:KeyboardEvent) :void {
+		  		var modifier:String = ExternalInterface.call("determineModifier");
+		  		loadKeyCombos(modifier);
+		  
+		  		var keyPress:String = (e.ctrlKey  ? "control+" : "") + (e.shiftKey ? "shift+"   : "") + (e.altKey   ? "alt+"     : "") + e.keyCode;
+				
+				if (keyCombos[keyPress]) {
+					LogUtil.debug("WATERFALL: Caught shortcut in activitylog box, " + keyCombos[keyPress]);
+					var event:ShortcutEvent = new ShortcutEvent(keyCombos[keyPress]);
+					event.otherUserID = activitylogWithUserID;
+					globalDispatcher.dispatchEvent(event);
+				}
+		    }
+			      
+			private function advanceMessage(e:ShortcutEvent):void{
+				if (e.otherUserID == activitylogWithUserID){
+					if (currentMessage < (activitylogMessages.numMessages() - 1)){
+						currentMessage++;
+					} else {
+						activitylogMessagesList.accessibilityProperties.description += " ";
+						repeat = true;
+					}
+					navigationMaintenance();
+				}
+			}
+			
+			private function goBackOneMessage(e:ShortcutEvent):void {
+				if (e.otherUserID == activitylogWithUserID){
+					if (currentMessage > 0){
+						currentMessage--;
+					}
+					else if (currentMessage < 0){
+						currentMessage = 0;
+						latestMessage = 0;
+					}
+					else{
+						activitylogMessagesList.accessibilityProperties.description += " ";
+						repeat = true;
+					}
+					navigationMaintenance();
+				}
+			}
+			
+			private function repeatMessage(e:ShortcutEvent):void {
+				if (currentMessage < 0){
+					currentMessage = 0;
+					latestMessage = 0;
+					if (activitylogMessages.messages.length > 0)
+						activitylogMessagesList.accessibilityProperties.description = activitylogMessages.messages.getItemAt(currentMessage).toString();
+				}
+				if (e.otherUserID == activitylogWithUserID){
+					activitylogMessagesList.accessibilityProperties.description += " ";
+					repeat = true;
+					navigationMaintenance();
+				}
+			}
+			
+			private function goToLatestMessage(e:ShortcutEvent):void {
+				if (latestMessage < 0){
+					currentMessage = 0;
+					latestMessage = 0;
+				}
+				if (e.otherUserID == activitylogWithUserID){
+					currentMessage = activitylogMessages.numMessages() - 1;
+					navToLatest = true;
+					spacerNeeded = setDescription();
+					indicatorNeeded = true;
+					activitylogMessagesList.accessibilityProperties.description = navLatestString + " " + activitylogMessages.messages.getItemAt(currentMessage).toString();
+					navigationMaintenance();
+				}
+			}
+			
+			private function goToFirstMessage(e:ShortcutEvent):void {
+				if (e.otherUserID == activitylogWithUserID){
+					currentMessage = 0;
+					navToFirst = true;
+					spacerNeeded = setDescription();
+					indicatorNeeded = true;
+					activitylogMessagesList.accessibilityProperties.description = navFirstString + " " + activitylogMessages.messages.getItemAt(currentMessage).toString();
+					navigationMaintenance();
+				}
+			}
+			
+			private function goToLatestReadMessage(e:ShortcutEvent):void {
+				if (e.otherUserID == activitylogWithUserID){
+					currentMessage = latestMessage;
+					activitylogMessagesList.accessibilityProperties.description = navRecentString + " " + activitylogMessages.messages.getItemAt(currentMessage).toString();
+					navigationMaintenance();
+				}
+			}
+			
+			private function navigationMaintenance():void {
+				// Update the latestMessage counter for new message notifications
+				if (currentMessage > latestMessage)
+					latestMessage = currentMessage;
+					
+				if (!repeat){
+				// Make it clear to the user that they have either navigated to or reached one end of the message history or the other.
+					if (currentMessage == 0){
+						if (!navToFirst){
+							indicatorNeeded = true;
+							activitylogMessagesList.accessibilityProperties.description = reachedFirst + " " + activitylogMessages.messages.getItemAt(currentMessage).toString();
+						}
+					}
+					else if (currentMessage == activitylogMessages.numMessages() - 1){
+						if (!navToLatest){
+							indicatorNeeded = true;
+							activitylogMessagesList.accessibilityProperties.description = reachedLatest + " " + activitylogMessages.messages.getItemAt(currentMessage).toString();			
+						}
+					}
+					else{
+						// Set the accessibility description to the indicated message
+						activitylogMessagesList.accessibilityProperties.description = activitylogMessages.messages.getItemAt(currentMessage).toString();
+					}
+					
+					// Add a single space to the end of the accessibilityProperties.description if necessary to ensure that it reflects the current message after being updated.
+					if (spacerNeeded || setDescription()){
+						activitylogMessagesList.accessibilityProperties.description += " ";
+					}
+				}
+				if(Capabilities.hasAccessibility)
+					Accessibility.updateProperties();
+				navToFirst = false;
+				navToLatest = false;
+				spacerNeeded = false;
+				indicatorNeeded = false
+				repeat = false;
+				LogUtil.debug("Done with navigationMaintenance(); description is now " + activitylogMessagesList.accessibilityProperties.description);
+			}
+			
+			// General-purpose developer method, used during testing of ActivitylogBox accessibility
+			private function activitylogDebugInfo(e:ShortcutEvent):void{
+				LogUtil.debug("----ACTIVITYLOG DEBUG INFORMATION----");
+					var num:int = activitylogMessages.numMessages();
+					LogUtil.debug("Printing all activitylog messages of the " + num + " present:");
+					for (var i:int = 0; i < num; i++){
+						if (activitylogMessages.messages.getItemAt(i) != null)
+							LogUtil.debug("Message " + i + ": " + activitylogMessages.messages.getItemAt(i).toString());
+						else
+							LogUtil.debug("Message " + i + " is NULL");
+					}
+			}
+     
+      private function sendPublicActivitylogMessage(message:String):void {
+        var publicEvent:SendPublicActivitylogMessageEvent = new SendPublicActivitylogMessageEvent(SendPublicActivitylogMessageEvent.SEND_PUBLIC_ACTIVITYLOG_MESSAGE_EVENT);
+        var cm:ActivitylogMessageVO = new ActivitylogMessageVO();
+        cm.activitylogType = ActivitylogConstants.PUBLIC_ACTIVITYLOG;
+        cm.fromUserID = UsersUtil.getMyUserID();
+        cm.fromUsername = UsersUtil.getMyUsername();
+        cm.fromColor =  cmpColorPicker.selectedColor.toString();
+        cm.fromLang = ActivitylogUtil.getUserLang();
+        var now:Date = new Date();
+        cm.fromTime = now.valueOf();
+        cm.fromTimezoneOffset = now.getTimezoneOffset();
+        
+        cm.message = ActivitylogUtil.parseURLs(ActivitylogUtil.cleanup(message));
+        
+        publicEvent.activitylogMessage = cm;
+        globalDispatcher.dispatchEvent(publicEvent);
+      }
+      
+      private function sendPrivateActivitylogMessage(message:String):void {
+        var privateEvent:SendPrivateActivitylogMessageEvent = new SendPrivateActivitylogMessageEvent(SendPrivateActivitylogMessageEvent.SEND_PRIVATE_ACTIVITYLOG_MESSAGE_EVENT);
+        var cm:ActivitylogMessageVO = new ActivitylogMessageVO();
+        cm.activitylogType = ActivitylogConstants.PRIVATE_ACTIVITYLOG;
+        cm.fromUserID = UsersUtil.getMyUserID();
+        cm.fromUsername = UsersUtil.getMyUsername();
+        cm.fromColor = cmpColorPicker.selectedColor.toString();
+        cm.fromLang = ActivitylogUtil.getUserLang();
+        var now:Date = new Date();
+        cm.fromTime = now.valueOf();
+        cm.fromTimezoneOffset = now.getTimezoneOffset();
+                
+        cm.message = ActivitylogUtil.cleanup(message);
+        cm.toUserID = activitylogWithUserID;
+        cm.toUsername = activitylogWithUsername;
+        
+        privateEvent.activitylogMessage = cm;
+        globalDispatcher.dispatchEvent(privateEvent);
+      }
+
+      private function handleTextAreaKeyUpEvent(e:KeyboardEvent):void {
+		if (e.keyCode == Keyboard.ENTER) { // send with enter
+			sendMessages();
+		}
+		// go through cmd history with arrow up and down keys
+		if (e.keyCode == 38) { // history up
+			if (lmcount-lmoffset > 0) {
+				lmoffset = lmoffset + 1;
+				txtMsgArea.text = lastMessages[lmcount-lmoffset];
+			}
+			if (lmcount-lmoffset == 0) {
+				txtMsgArea.text = lastMessages[lmcount-lmoffset];
+			}
+			if (lmcount-lmoffset < 0) {
+				lmoffset = lmoffset - 1;
+				txtMsgArea.text = lastMessages[lmcount-lmoffset];
+			}
+		}
+		if (e.keyCode == 40) { // history down
+			if (lmoffset < 1) {
+				txtMsgArea.text = "";
+				lmoffset = -1;
+				
+			} else {
+				lmoffset = lmoffset - 1;
+				txtMsgArea.text = lastMessages[lmcount-lmoffset];
+			}
+		}
+	  }
+	// for cmd history
+	private var lastMessages:ArrayCollection = new ArrayCollection();
+	private var lmcount:int = -1;
+	private var lmoffset:int = -1;
+
+	private function sendMessages():void {
+		// Trim the message. This will trim the '/n' char so we don't send a message when the user just hits the enter key
+		var msgToSend:String = StringUtil.trim(txtMsgArea.text);
+		
+		if (msgToSend != ""){				
+			lastMessages.addItem(msgToSend);
+			lmcount = lmcount + 1;
+			lmoffset = -1;
+			activitylogMessages.newAlogQuery(msgToSend);
+			scrollToEndOfMessage();
+		}
+		txtMsgArea.text = "";
+	}
+	  
+	private function focusActivitylogInput(e:ShortcutEvent):void{
+		txtMsgArea.setFocus();
+	}
+			
+	private function lockSettingsChanged(e:Event):void {
+		applyLockSettings();
+	}
+      
+	private function applyLockSettings():void { }
+
+		]]>
+		
+	</mx:Script>
+
+  <mx:HBox width="100%" height="{activitylogListHeight}" verticalScrollPolicy="off">
+    <activitylog:AdvancedList width="100%" height="{activitylogListHeight}" id="activitylogMessagesList" selectable="false" variableRowHeight="true" 
+             itemRenderer="org.bigbluebutton.modules.activitylog.views.ActivitylogMessageRenderer" verticalScrollPolicy="auto" wordWrap="true"
+             dataProvider="{activitylogMessages.messages}"
+             tabIndex="{baseIndex}"
+             accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.messageList')}" />    
+  </mx:HBox>
+  
+  <mx:HBox id="activitylogCtrlBar" width="100%" height="30" styleName="activitylogControlBarStyle" verticalScrollPolicy="off"
+           paddingLeft="5" paddingRight="5">		
+    <mx:TextInput id="txtMsgArea" width="100%" height="25%"
+                 styleName="activitylogControlBarTextMsgStyle" 
+                 toolTip="{ResourceUtil.getInstance().getString('bbb.accessibility.activitylog.activitylogwindow.input')}"
+                 tabIndex="{baseIndex+1}"
+				 accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.input.accessibilityName')}" />
+    <mx:VBox verticalScrollPolicy="off" verticalAlign="middle" height="100%" >
+      <!--<mx:Button label="{ResourceUtil.getInstance().getString('bbb.activitylog.sendBtn')}" id="sendBtn" height="30"
+                 styleName="activitylogControlBarSendButtonStyle"
+                 toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.sendBtn.toolTip')}" 
+                 click="sendMessages()"
+                 tabIndex="{baseIndex+2}"
+                 accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.sendBtn.accessibilityName')}"/>  -->
+		<mx:ColorPicker id="cmpColorPicker" showTextField="false" width="100%" visible="{activitylogOptions.colorPickerIsVisible}" includeInLayout="{activitylogOptions.colorPickerIsVisible}" 
+						toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.cmpColorPicker.toolTip')}" 
+						selectedColor="0x000000" dataProvider="{colorPickerColours}" swatchPanelStyleName="activitylogColorPickerStyle"
+						tabIndex="{baseIndex+3}" />
+    </mx:VBox>
+  </mx:HBox>	
+</mx:VBox>

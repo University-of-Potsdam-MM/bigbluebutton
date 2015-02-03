@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+
+BigBlueButton open source conferencing system - http://www.bigbluebutton.org/
+
+Copyright (c) 2012 BigBlueButton Inc. and by respective authors (see below).
+
+This program is free software; you can redistribute it and/or modify it under the
+terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 3.0 of the License, or (at your option) any later
+version.
+
+BigBlueButton is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along
+with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
+
+-->
+
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml"
+    xmlns:mate="http://mate.asfusion.com/"
+    creationComplete="onCreationComplete()"
+    initialize="init()"
+    xmlns:flexlib="http://code.google.com/p/flexlib/"
+    width="100%" height="100%" xmlns:containers="flexlib.containers.*"
+    verticalScrollPolicy="off">
+
+  <mate:Listener type="{PrivateActivitylogMessageEvent.PRIVATE_ACTIVITYLOG_MESSAGE_EVENT}" method="handlePrivateActivitylogMessageEvent"/>
+  <mate:Listener type="{PublicActivitylogMessageEvent.PUBLIC_ACTIVITYLOG_MESSAGE_EVENT}" method="handlePublicActivitylogMessageEvent"/>
+  <mate:Listener type="{EventConstants.START_PRIVATE_ACTIVITYLOG}" method="handleStartPrivateActivitylogMessageEvent"/>
+  <mate:Listener type="{ShortcutEvent.FOCUS_ACTIVITYLOG_TABS}" method="focusActivitylogTabs" />
+  <mate:Listener type="{ShortcutEvent.FOCUS_ACTIVITYLOG_BOX}" method="focusForHelp" />
+  
+	<mx:Script>
+		<![CDATA[
+      import be.boulevart.google.ajaxapi.translation.GoogleTranslation;
+      import be.boulevart.google.events.GoogleApiEvent;     
+      import com.asfusion.mate.events.Dispatcher;
+      import flash.accessibility.Accessibility;
+      import flash.events.Event;
+      import flash.events.FocusEvent;
+      import flash.external.ExternalInterface;
+      import flash.media.Sound;
+      import flash.media.SoundChannel;
+      import flexlib.controls.tabBarClasses.SuperTab;
+      import flexlib.controls.textClasses.StringBoundaries;
+      import flexlib.events.SuperTabEvent;
+      import flexlib.mdi.containers.MDIWindow;
+      import mx.collections.ArrayCollection;
+      import mx.containers.ControlBar;
+      import mx.controls.Button;
+      import mx.core.Container;
+      import mx.core.UIComponent;
+      import mx.events.IndexChangedEvent;
+      import org.bigbluebutton.common.LogUtil;
+      import org.bigbluebutton.core.BBB;
+      import org.bigbluebutton.core.EventConstants;
+      import org.bigbluebutton.core.UsersUtil;
+      import org.bigbluebutton.core.events.CoreEvent;
+      import org.bigbluebutton.core.managers.UserManager;
+      import org.bigbluebutton.main.events.BBBEvent;
+      import org.bigbluebutton.main.events.ShortcutEvent;
+      import org.bigbluebutton.main.model.users.BBBUser;
+      import org.bigbluebutton.modules.activitylog.ActivitylogUtil;
+      import org.bigbluebutton.modules.activitylog.events.ActivitylogOptionsEvent;
+      import org.bigbluebutton.modules.activitylog.events.PrivateActivitylogMessageEvent;
+      import org.bigbluebutton.modules.activitylog.events.PublicActivitylogMessageEvent;
+      import org.bigbluebutton.modules.activitylog.events.SendPrivateActivitylogMessageEvent;
+      import org.bigbluebutton.modules.activitylog.events.SendPublicActivitylogMessageEvent;
+      import org.bigbluebutton.modules.activitylog.model.ActivitylogOptions;
+      import org.bigbluebutton.modules.activitylog.model.business.UserVO;
+      import org.bigbluebutton.modules.activitylog.vo.ActivitylogMessageVO;
+      import org.bigbluebutton.util.i18n.ResourceUtil;			
+					
+	    private static const PUBLIC_ACTIVITYLOG_USERID:String = 'public_activitylog_userid';
+	    private var PUBLIC_ACTIVITYLOG_USERNAME:String = ResourceUtil.getInstance().getString("bbb.activitylog.publicActivitylogUsername");
+	    private var OPTION_TAB_ID:String = ResourceUtil.getInstance().getString("bbb.activitylog.optionsTabName");
+	    private var tabBox:AddActivitylogTabBox;
+	    private var publicBox:ActivitylogBox;
+	    private var focus:Boolean = true;			
+	    private var globalDispatcher:Dispatcher = new Dispatcher();			
+	    private var autoTranslation:Boolean=false;
+			
+      [Bindable] public var activitylogOptions:ActivitylogOptions;
+	  
+	    [Bindable] private var baseIndex:int;
+      
+		  private static const PUBLIC_TAB_NEW:String = ResourceUtil.getInstance().getString("bbb.accessibility.activitylog.activitylogView.publicTabNew");
+		  private var publicWaiting:Boolean = false;
+		  private var publicFocus:Boolean = false;
+		  private var noticeLabel:String; 
+			
+		  [Embed(source="../sounds/notice.mp3")] 
+		  private var noticeSoundClass:Class;
+		  private var noticeSound:Sound = new noticeSoundClass() as Sound;
+		  // All author and license information for the use of this sound can be found in:
+		  // src/org/bigbluebutton/modules/activitylog/sounds/license.txt
+
+			// Initialization
+			private function init():void {
+				activitylogOptions = new ActivitylogOptions();
+				noticeLabel = ResourceUtil.getInstance().getString('bbb.activitylog.activitylogTabs.accessibleNotice');
+				// Get the base tab index from config, and add four to make up for the min/max/close buttons and title overlay
+				baseIndex = activitylogOptions.getBaseIndex() + 4;
+			}
+			
+
+      private function onCreationComplete():void{				
+				openActivitylogBoxFor(PUBLIC_ACTIVITYLOG_USERID, true);
+		    makePublicActivitylogUncloseable();
+		        
+		    if (activitylogOptions.privateEnabled) {
+		       createAddTabBox();
+		       makeAddPrivateActivitylogUncloseable();
+		    }
+				
+				ResourceUtil.getInstance().addEventListener(Event.CHANGE, localeChanged); // Listen for locale changing
+				
+				addEventListener(SuperTabEvent.TAB_CLOSE, onUserClosedTab);
+        
+				systemManager.stage.addEventListener(Event.MOUSE_LEAVE, mouseLeave);
+				systemManager.stage.addEventListener(Event.ACTIVATE, activate);
+				systemManager.stage.addEventListener(Event.DEACTIVATE, deactivate);
+			}       
+			
+			private function focusActivitylogTabs(e:ShortcutEvent):void{
+				focusManager.setFocus(activitylogTabs);
+			}
+
+			//1 changing tab when clicking help button
+			private function focusForHelp(e:ShortcutEvent):void{
+				activitylogTabs.selectedIndex = 0;
+			}
+			
+			private function localeChanged(e:Event):void{
+				setTabTitles();
+			}
+			
+			private function setTabTitles():void {
+				PUBLIC_ACTIVITYLOG_USERNAME = ResourceUtil.getInstance().getString("bbb.activitylog.publicActivitylogUsername");
+				OPTION_TAB_ID = ResourceUtil.getInstance().getString("bbb.activitylog.optionsTabName");				
+				
+				if (tabBox != null) {
+					tabBox.id = OPTION_TAB_ID;
+					tabBox.label = OPTION_TAB_ID;
+					tabBox.name = OPTION_TAB_ID;
+				}
+				
+				if (publicBox != null) {
+					publicBox.label = PUBLIC_ACTIVITYLOG_USERNAME;
+				}
+			}
+			
+		  private function handlePublicActivitylogMessageEvent(event:PublicActivitylogMessageEvent):void {
+			  notifyUserOfNewMessage(PUBLIC_ACTIVITYLOG_USERID);
+			  if (!UsersUtil.isMe(event.message.fromUserID)) {
+          publicNotification();
+        }			
+      }
+      
+		  private function handlePrivateActivitylogMessageEvent(event:PrivateActivitylogMessageEvent):void {
+		    // This message is from me. Ignore as a activitylogbox has already been created for this
+			  // private activitylog and that activitylogbox will handle this message.
+			  if (UsersUtil.isMe(event.message.fromUserID)) return;
+			
+			  // I received a new private activitylog. Open up a new activitylogbox and forward the message
+			  // to the activitylogbox. Succeeding messages will be handled by that activitylogbox.
+			  if (! userHasActivitylogBox(event.message.fromUserID)) {
+			  	// Open a private activitylog tab.
+			  	openActivitylogBoxFor(event.message.fromUserID, false);
+			  	// Forward the message to the private activitylog
+				  getActivitylogBoxForUser(event.message.fromUserID).handleFirstPrivateMessage(event);          
+			  }
+			
+			  // See if the activitylogbox is not in focus and notify user about the message.
+			  notifyUserOfNewMessage(event.message.fromUserID);
+			  privateNotification(event);
+	 	  }
+      
+      private function notifyUserOfNewMessage(userID:String):void {
+        if (! isActivitylogBoxCurrentlySelected(userID)) {
+        	notifyParticipantOfUnreadMessageFrom(userID);
+        }
+      }
+      		
+			private function mouseLeave(event:Event):void{
+				this.focus = false;
+			}
+			
+			private function activate(event:Event):void{
+				this.focus = true;
+			}
+			
+			private function deactivate(event:Event):void{
+				this.focus = false;
+			}
+					
+			private function makePublicActivitylogUncloseable():void {
+				// See definition of callLater on Adobe Flash doc.
+				callLater(calledOnTheNextScreenRefreshToMakePublicActivitylogUncloseable);
+			}
+			
+      private function makeAddPrivateActivitylogUncloseable():void {
+        // See definition of callLater on Adobe Flash doc.
+        callLater(calledOnTheNextScreenRefreshToMakeTabUncloseable);        
+      }      
+      
+      private function calledOnTheNextScreenRefreshToMakeTabUncloseable():void {
+        activitylogTabs.setClosePolicyForTab(activitylogTabs.getChildIndex(tabBox), SuperTab.CLOSE_NEVER);
+      }
+      
+			private function calledOnTheNextScreenRefreshToMakePublicActivitylogUncloseable():void {
+				var activitylogBox:ActivitylogBox = getActivitylogBoxForUser(PUBLIC_ACTIVITYLOG_USERID);
+				var activitylogIndex:int = getTabIndexFor(activitylogBox);
+				activitylogTabs.setClosePolicyForTab(activitylogIndex, SuperTab.CLOSE_NEVER);								
+			}
+											
+			private function isActivitylogBoxCurrentlySelected(id:String):Boolean {
+				if (activitylogTabs.getChildByName(id) == activitylogTabs.selectedChild){
+					return true;
+				}
+				return false;
+			}
+								
+			private function notifyParticipantOfUnreadMessageFrom(userid:String):void {
+				var activitylogBox:ActivitylogBox = getActivitylogBoxForUser(userid);
+				var tabIndex:int = getTabIndexFor(activitylogBox);
+				var tab:Button = activitylogTabs.getTabAt(tabIndex);
+				tab.setStyle("fillColors", new Array(0xFFAE00, 0xD3800A));
+				tab.setStyle("fillAlphas", new Array(1.0, 0.8));
+				
+				// An event to change the accessibilityDescription of the given activitylog tab to <existing label> + "NEW MESSAGE" should go here.
+				// However, the SuperTabNavigator does not cooperate with changes to it's accessibility properties.
+			}
+			
+			private function getTabIndexFor(activitylogBox:ActivitylogBox):int {
+				return activitylogTabs.getChildIndex(activitylogBox);
+			}
+			
+			private function onTabNavChange():void{
+				var tab:Button = activitylogTabs.getTabAt(activitylogTabs.selectedIndex);
+				tab.setStyle("fillColors", new Array(0xFFFFFF, 0xCCCCCC));
+				
+				// An event to remove the "NEW MESSAGE" notification from the accessibilityDescription of the given activitylog tab (if it exists) should go here.
+				// However, the SuperTabNavigator does not cooperate with changes to it's accessibility properties.
+				
+		    var activitylogBox:IActivitylogTab = activitylogTabs.getChildAt(activitylogTabs.selectedIndex) as IActivitylogTab;
+		    activitylogBox.focusToTextMessageArea();
+			}
+								
+		  private function userHasActivitylogBox(userID:String):Boolean {
+		    var activitylogBox:ActivitylogBox = activitylogTabs.getChildByName(userID) as ActivitylogBox;
+		    if (activitylogBox != null) return true;
+		    return false;
+		  }
+		      
+		  private function getActivitylogBoxForUser(userID:String):ActivitylogBox {
+		    return activitylogTabs.getChildByName(userID) as ActivitylogBox;
+		  }
+		      
+		  private function handleStartPrivateActivitylogMessageEvent(event:CoreEvent):void {
+		    var userID:String = event.message.activitylogWith;
+		    openActivitylogBoxFor(userID);
+		    var activitylogBox:ActivitylogBox = getActivitylogBoxForUser(userID);
+		    var tabIndex:int = getTabIndexFor(activitylogBox);
+		    activitylogTabs.selectedIndex = tabIndex;
+		  }
+      
+			public function openActivitylogBoxFor(activitylogWithUserID:String, publicActivitylog:Boolean=false):void {
+				var activitylogBox:ActivitylogBox;
+				
+				if (userHasActivitylogBox(activitylogWithUserID)) {
+					activitylogBox = getActivitylogBoxForUser(activitylogWithUserID);
+				} else {
+					activitylogBox = createActivitylogBoxFor(activitylogWithUserID, publicActivitylog);
+					activitylogBox.activitylogWithUserID = activitylogWithUserID;
+				}				
+			}
+			
+			private function createActivitylogBoxFor(activitylogWithUserID:String, publicActivitylog:Boolean=false):ActivitylogBox {				
+				var activitylogBox:ActivitylogBox = new ActivitylogBox();
+				activitylogBox.id = activitylogWithUserID;
+		    activitylogBox.name = activitylogWithUserID;
+				activitylogBox.baseIndex = baseIndex;
+		        
+		    if (publicActivitylog) {
+		      activitylogBox.label = PUBLIC_ACTIVITYLOG_USERNAME
+		      activitylogBox.publicActivitylog = true;
+				  publicBox = activitylogBox; // keep a reference to the public activitylog box
+		    } else {
+		      activitylogBox.publicActivitylog = false;
+		      activitylogBox.label = UsersUtil.getUserName(activitylogWithUserID);
+		    }
+				
+				activitylogBox.activitylogWithUsername = UsersUtil.getUserName(activitylogWithUserID);
+				
+				if (activitylogTabs.numChildren >= 2) { 
+					activitylogTabs.addChildAt(activitylogBox, activitylogTabs.numChildren - 1);
+				} else {
+					activitylogTabs.addChild(activitylogBox);
+				}
+         
+				return activitylogBox;
+			}
+			     
+			private function createAddTabBox():AddActivitylogTabBox {
+				tabBox = new AddActivitylogTabBox();
+				tabBox.activitylogView = this;
+				tabBox.id = OPTION_TAB_ID;
+				tabBox.label = OPTION_TAB_ID;
+				tabBox.name = OPTION_TAB_ID;
+				tabBox.activitylogOptions = activitylogOptions;
+				
+				tabBox.addEventListener(KeyboardEvent.KEY_DOWN, tabBox.accessibleClick);
+				activitylogTabs.addChild(tabBox);
+				
+				return tabBox;
+			}
+			
+			
+			// Activates an audio alert for screen-reader users on public message reception
+			private function publicNotification():void {
+				publicWaiting = true;
+				if (Accessibility.active){
+					noticeSound.play();
+				}
+				activitylogTabs.getChildByName(PUBLIC_ACTIVITYLOG_USERID).addEventListener(FocusEvent.FOCUS_IN, publicActivitylogFocus);
+				activitylogTabs.getChildByName(PUBLIC_ACTIVITYLOG_USERID).addEventListener(FocusEvent.FOCUS_OUT, publicActivitylogUnfocus);
+			}
+			
+			// Activates an audio alert for screen-reader users on private message reception
+			private function privateNotification(event:PrivateActivitylogMessageEvent):void{
+				if (! UsersUtil.isMe(event.message.fromUserID)) {
+					if (Accessibility.active){
+						noticeSound.play();
+					}
+				}
+			}
+			
+			public function publicActivitylogFocus(event:FocusEvent):void{
+				publicFocus = true;					
+				publicWaiting = false;
+			}
+					
+			public function publicActivitylogUnfocus(event:FocusEvent):void {
+				publicFocus = false;
+			}
+										
+			private function focusPreviousActivitylogTab(e:ShortcutEvent):void{
+				if (activitylogTabs.selectedIndex > 0){
+					activitylogTabs.selectedIndex--;
+				}
+				else{
+					activitylogTabs.selectedIndex = activitylogTabs.numChildren - 1;
+				}				
+			}
+			
+			private function focusNextActivitylogTab(e:ShortcutEvent):void{
+				if (activitylogTabs.selectedIndex < activitylogTabs.numChildren - 1){
+					activitylogTabs.selectedIndex++;
+				}
+				else{
+					activitylogTabs.selectedIndex = 0;
+				}
+			}
+			          		
+			private function onTabClose(e:SuperTabEvent):void{
+				dispatchEvent(e);
+			}
+			
+			private function onUserClosedTab(e:SuperTabEvent):void{
+				var name:String = activitylogTabs.getChildAt(e.tabIndex).name;
+			}
+			
+		]]>
+	</mx:Script>
+	<containers:SuperTabNavigator includeInLayout="false" id="activitylogTabs" 
+                                width="100%" height="100%" change="onTabNavChange()" 
+                                tabClose="onTabClose(event)" minTabWidth="20"
+								  dragEnabled="false" popUpButtonPolicy="off" tabIndex="{baseIndex}"
+								  />
+</mx:VBox>
