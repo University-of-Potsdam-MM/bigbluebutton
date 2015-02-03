@@ -35,10 +35,13 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 		import com.asfusion.mate.events.Dispatcher;
 		
 		import flash.events.Event;
+    import mx.controls.Alert;
 		
 		import mx.managers.HistoryManager;
 		import mx.managers.ToolTipManager;
+    import mx.managers.SystemManager;
 		import mx.utils.URLUtil;
+    import mx.core.FlexGlobals;
 		
 		import org.bigbluebutton.common.LogUtil;
 		import org.bigbluebutton.common.events.AddUIComponentToMainCanvas;
@@ -71,18 +74,16 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         setupTooltips();
         setupAPI();
         EventBroadcaster.getInstance().addEventListener("configLoadedEvent", configLoadedEventHandler);
+        EventBroadcaster.getInstance().addEventListener(Event.ADDED_TO_STAGE, appComplete);
         BBB.initConfigManager();
-        globalModifier = ExternalInterface.call("determineGlobalModifier");
+        globalModifier = ExternalInterface.call("determineGlobalModifier"); 
+        hotkeyCapture();
       }
       
       private function configLoadedEventHandler(e:Event):void {
         LogUtil.debug("***** Config Loaded ****");
         mainShell.initOptions(null);
         ShortcutOptions.initialize();
-      }
-      
-      private function appComplete():void{
-        hotkeyCapture();
       }
       
       private var api:ExternalApiCallbacks;
@@ -175,13 +176,15 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       
       public function hotkeyCapture():void{
         trace("Entering hotkeyCapture");
-        stage.addEventListener(KeyboardEvent.KEY_DOWN, handleKeyDown);
+        var sm:SystemManager = SystemManager(BigBlueButton(FlexGlobals.topLevelApplication).systemManager);
+        sm.stage.addEventListener(KeyboardEvent.KEY_DOWN, handleKeyDown);
         ResourceUtil.getInstance().addEventListener(Event.CHANGE, localeChanged); // Listen for locale changing
         trace("Leaving hotkeyCapture");
       }
       
       // Handle general-access hotkeys, regardless of what window the user is focused in
       private function handleKeyDown(e:KeyboardEvent) :void {
+        ExternalInterface.call("alert", 'key press!');
         if (keyCombos == null) loadKeyCombos(globalModifier);
         
         var keyPress:String = (e.ctrlKey  ? "control+" : "") + (e.shiftKey ? "shift+"   : "") + (e.altKey   ? "alt+"     : "") + e.keyCode;
