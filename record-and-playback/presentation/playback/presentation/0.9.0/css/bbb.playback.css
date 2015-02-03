@@ -163,6 +163,17 @@ br{
 	padding:0px;
 	font-size:13px;
 }
+#notes{
+	margin: 0 auto;
+	padding: 0 10px;
+	border: 0px solid #ccc;
+	height: 300px;
+	overflow: auto;
+}
+#notes div{
+	padding:0px;
+	font-size:13px;
+}
 #big {display:none}
 #mid {display:none}
 

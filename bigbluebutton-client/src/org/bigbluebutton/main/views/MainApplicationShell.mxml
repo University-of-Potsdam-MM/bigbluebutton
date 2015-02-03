@@ -57,6 +57,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	<mate:Listener type="{BBBEvent.OPEN_WEBCAM_PREVIEW}" method="openVideoPreviewWindow" />
 	<mate:Listener type="{LockControlEvent.OPEN_LOCK_SETTINGS}" method="openLockSettingsWindow" />
 	<mate:Listener type="{InvalidAuthTokenEvent.INVALID_AUTH_TOKEN}" method="handleInvalidAuthToken" />
+	
+	<mate:Listener type="{ShortcutEvent.OPEN_ADJUSTMENTS_WIN}" method="openAdjustmentsWindow" />
 	  
 	<mx:Script>
 		<![CDATA[
@@ -124,6 +126,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			private var scWindow:ShortcutHelpWindow;
 			private var logoutWindow:LoggedOutWindow;
 			private var connectionLostWindow:ConnectionLostWindow;
+			
+			private var adjustWindow:AdjustmentsWindow;
 			
 			[Bindable] private var baseIndex:int = 100000;
 			
@@ -276,6 +280,27 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				mdiCanvas.windowManager.absPos(scWindow, mdiCanvas.width/2 - 150, mdiCanvas.height/2 - 150);
 				
 				scWindow.focusHead();
+			}
+			
+			public function openAdjustmentsWindow(e:Event = null):void {
+								
+				if (adjustWindow == null) {
+					adjustWindow = new AdjustmentsWindow();
+				    //adjustWindow.width = 700;
+					//adjustWindow.height = 400;
+				}
+				
+				/*if (adjustWindow.minimized)
+					adjustWindow.restore();*/
+				
+				/*if (adjustWindow.maximized)
+					adjustWindow.restore();*/
+				
+				mdiCanvas.windowManager.add(adjustWindow);
+				//mdiCanvas.windowManager.absPos(adjustWindow, mdiCanvas.width/2 - 350, mdiCanvas.height/2 - 200);
+				mdiCanvas.windowManager.absPos(adjustWindow, 0, 0);				
+				
+				//adjustWindow.focusHead();
 			}
 			
 			private function toggleFullScreen():void{

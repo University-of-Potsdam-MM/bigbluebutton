@@ -1,8 +1,9 @@
-// PLUGIN: Timeline
+// PLUGIN: NotesTimeline
 (function ( Popcorn ) {
 
   /**
-     * chat-timeline popcorn plug-in
+     * mostly a copy of popcorn.chattimeline.js
+     * notes-timeline popcorn plug-in
      * Adds data associated with a certain time in the video, which creates a scrolling view of each item as the video progresses
      * Options parameter will need a start, target, title, and text
      * -Start is the time that you want this plug-in to execute
@@ -25,24 +26,24 @@
   */
 
   var i = 1;
-
-  Popcorn.plugin( "chattimeline" , function( options ) {
+ Popcorn.plugin( "notesTimeline" , function( options ) {
     var target = document.getElementById( options.target ),
         contentDiv = document.createElement( "div" ),
         goingUp = true;
 
     contentDiv.style.display = "none";
     contentDiv.setAttribute('aria-hidden', true);
-    contentDiv.id = "timelineDiv" + i;
+    contentDiv.id = "notesTimelineDiv" + i;
     contentDiv.onclick = function() {goToSlide(options.start);Popcorn('#video').pause();};
-
+    
     //  Default to up if options.direction is non-existant or not up or down
     options.direction = options.direction || "up";
     if ( options.direction.toLowerCase() === "down" ) {
 
       goingUp = false;
     }
-    if ( target ) { 
+
+    if ( target ) {
       // if this isnt the first div added to the target div
       if( goingUp ){
         // insert the current div before the previous div inserted
