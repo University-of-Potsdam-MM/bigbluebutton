@@ -18,7 +18,7 @@
 	<property name="OUTPUT_DIR" value="${BASE_DIR}/client" />
 	<taskdef resource="flexTasks.tasks" classpath="${FLEX_HOME}/ant/lib/flexTasks.jar" />
 
-	<!-- Declare module names here -->
+	<!-- Declare module names here --> 
 	<property name="BBB_MAIN" value="BigBlueButton" />
 	<property name="BROADCAST" value="BroadcastModule" />
 	<property name="CHAT" value="ChatModule" />
