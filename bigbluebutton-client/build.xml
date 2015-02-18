@@ -177,6 +177,7 @@
 				  Look into bundles.txt to find out what resources to include here.
 				  http://forums.adobe.com/thread/758619
 				  ralam - sept 20, 2011
+				  
 				-->
 				<include-resource-bundles>SharedResources</include-resource-bundles>
 				<include-resource-bundles>bbbResources</include-resource-bundles>
