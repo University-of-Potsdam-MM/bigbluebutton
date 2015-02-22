@@ -708,7 +708,7 @@
 					$('#presentation').position({
 						"my": "left top",
 						"at": "left bottom",
-						"of": '#chat',
+						"of": '#textArea',
 						"collision": "none none"
 					});
 					$('#presentation').width("400px");
@@ -752,7 +752,7 @@
 					$('#videoRecordingWrapper').position({
 						"my": "left top",
 						"at": "left bottom",
-						"of": '#chat',
+						"of": '#textArea',
 						"collision": "none none"
 					});
 					$('#videoRecordingWrapper').width("400px");

@@ -34,6 +34,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   <script type="text/javascript" src="lib/popcorn-complete.min.js"></script>
   <script type="text/javascript" src="lib/popcorn.chattimeline.js"></script>
   <script type="text/javascript" src="lib/popcorn.notestimeline.js"></script>
+  <script type="text/javascript" src="lib/popcorn.activitylogtimeline.js"></script>
   <script type="text/javascript" src="advanced_playback.js"></script>
 
   <!--script type="text/javascript">
@@ -64,15 +65,20 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				<div id="slide" role="img" aria-labelledby="slideText"></div>
 				<div id="slideText" class="visually-hidden" aria-live="polite"></div>
 			</div>
-			<div id="chatAndMediaArea">
-				<h2 class="visually-hidden">Chat Messages</h2>
 
-				<input type="checkbox" name="exposechat" id="exposechat" value="exposechat" class="visually-hidden" checked="checked" />
-				<input type="radio" name="chatarea_type" id="chat_cb"  onchange="javascript:change_chatarea();" value="chat" checked="checked"/> chat
-				<input type="radio" name="chatarea_type" id="notes_cb" onchange="javascript:change_chatarea();" value="notes" /> notes
-				<label for="exposechat" class="visually-hidden">Read chat messages</label>
-				<div id="chat" aria-live="polite" role="region" aria-label="Chat messages"></div>
-				<div id="notes" aria-live="polite" role="region" aria-label="Notes" aria-hidden="true" style="height:0px;display: none"></div>
+			<div id="chatAndMediaArea">
+				<h2 class="visually-hidden">Text-Area</h2>
+				<input type="radio" name="chatarea_type" id="chat_cb"  onchange="javascript:change_chatarea();" value="chat" checked="checked"></input>
+				<label for="chat_cb">chat</label>
+				<input type="radio" name="chatarea_type" id="notes_cb" onchange="javascript:change_chatarea();" value="notes"></input>
+				<label for="notes_cb">notes</label>
+				<input type="radio" name="chatarea_type" id="activitylog_cb" onchange="javascript:change_chatarea();" value="activitylog"></input>
+				<label for="activitylog_cb">activitylog</label>
+				<div id="textArea" aria-live="polite" role="region" aria-label="text area">
+					<div id="chat" aria-live="polite" role="region" aria-label="Chat messages"></div>
+					<div id="notes" aria-live="polite" role="region" aria-label="Notes" aria-hidden="true" style="height:0px;display: none"></div>
+					<div id="activitylog" aria-live="polite" role="region" aria-label="Activitylog" aria-hidden="true" style="height:0px;display: none"></div>
+				</div>
 				<div id="videoRecordingWrapper" role="region" aria-label="Video">
 	<!--
 				  <video id="webcam" >You must use an HTML5 capable browser to view this page.
@@ -101,6 +107,27 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			<div id="countdown" />
 		</div>
 		-->
+	</div>	
+	<h2 class="visually-hidden">Options Text-Area (chat, notes, acctivitylog)</h2>
+	<input type="checkbox" name="showOptions" id="showOptions" value="showOptions" onchange="javascript:change_showOptions();"/>
+	<label for="showOptions">Show Text-Area options</label>
+	<div id="media-area-options" aria-hidden=true style="height:0px;display: none">
+		<h3>media-area Options</h3>
+		<input type="checkbox" name="exposechat" id="exposechat" value="exposechat" checked="checked" />
+		<label for="exposechat">Read chat messages</label>
+		<h4>Show in activitylog:</h4>
+		<input type="checkbox" name="activitylog_chat" id="activitylog_chat" value="activitylog_chat" checked="checked" />
+		<label for="activitylog_chat">Chat</label>
+		<input type="checkbox" name="activitylog_addShape" id="activitylog_addShape" value="activitylog_addShape" checked="checked" />
+		<label for="activitylog_addShape">AddShape</label>				
+		<input type="checkbox" name="activitylog_modifyText" id="activitylog_modifyText" value="activitylog_modifyText" checked="checked" />
+		<label for="activitylog_modifyText">ModifyText</label>		
+		<input type="checkbox" name="activitylog_gotoSlide" id="activitylog_gotoSlide" value="activitylog_gotoSlide" checked="checked" />
+		<label for="activitylog_gotoSlide">GotoSlide</label>				
+		<input type="checkbox" name="activitylog_participantStatus" id="activitylog_participantStatus" value="activitylog_participantStatus" checked="checked" />
+		<label for="activitylog_participantStatus">ParticipantStatus</label>
+		<input type="checkbox" name="activitylog_deskshare" id="activitylog_deskshare" value="activitylog_deskshare" checked="checked" />
+		<label for="activitylog_deskshare">Deskshare</label>
 	</div>	
 	<div id="footer">
                 <p>Recorded with <a target="_blank" href="http://bigbluebutton.org/">BigBlueButton</a>. </p>

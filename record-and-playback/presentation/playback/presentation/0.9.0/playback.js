@@ -116,6 +116,7 @@ var RECORDINGS = "/presentation/" + MEETINGID;
 var SLIDES_XML = RECORDINGS + '/slides_new.xml';
 var SHAPES_SVG = RECORDINGS + '/shapes.svg';
 var NOTES_XML = RECORDINGS + '/notes.xml';
+var ACTIVITYLOG_XML = RECORDINGS + '/activitylog.xml';
 
 /*
  * Sets the title attribute in a thumbnail.
@@ -335,7 +336,7 @@ load_video = function(){
    time_manager.on( "timeupdate", function() {
     pc_webcam.currentTime( this.currentTime() );
    });*/
-   var timeline_sources = SLIDES_XML;
+   var timeline_sources = SLIDES_XML+", "+ACTIVITYLOG_XML;
    if (USER_NOTES_XML!="") {
    	timeline_sources = timeline_sources+", "+USER_NOTES_XML;
    }
@@ -375,7 +376,7 @@ load_audio = function() {
       audio.appendChild(webmsource);
       audio.appendChild(oggsource);
    }
-   var timeline_sources = SLIDES_XML;
+   var timeline_sources = SLIDES_XML+", "+ACTIVITYLOG_XML;
    if (USER_NOTES_XML!="") {
    	timeline_sources = timeline_sources+", "+USER_NOTES_XML;
    }
