@@ -66,9 +66,27 @@
     return {
 
       start: function( event, options ) {
-        contentDiv.style.display = "block";
-        if ($("#exposechat").is(':checked')) {
-          contentDiv.setAttribute('aria-hidden', false);
+        switch(options.activity){
+        	case "[Chat]":
+        		showContent(contentDiv, ($("#activitylog_chat").is(':checked')));
+        		break;
+        	case "[AddShape]":
+        		showContent(contentDiv, ($("#activitylog_addShape").is(':checked')));
+        		break;        		
+        	case "[ModifyText]":
+        		showContent(contentDiv, ($("#activitylog_modifyText").is(':checked')));
+        		break;
+        	case "[GotoSlide]":
+        		showContent(contentDiv, ($("#activitylog_gotoSlide").is(':checked')));
+        		break;        		
+        	case "[ParticipantStatus]":
+        		showContent(contentDiv, ($("#activitylog_participantStatus").is(':checked')));
+        		break;
+        	case "[Deskshare]":
+        		showContent(contentDiv, ($("#activitylog_deskshare").is(':checked')));
+        		break;
+        	default:
+        		showContent(contentDiv, true);       	        	        	
         }
         if( options.direction === "down" ) {
           target.scrollTop = target.scrollHeight;
@@ -133,3 +151,12 @@
   });
 
 })( Popcorn );
+
+function showContent(content, show){
+	content.setAttribute('aria-hidden', !show);
+	if(show){
+		content.style.display = "block";
+	}else{
+		content.style.display = "none";
+	}
+}

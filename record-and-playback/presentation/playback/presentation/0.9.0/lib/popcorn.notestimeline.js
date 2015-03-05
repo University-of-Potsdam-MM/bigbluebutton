@@ -67,7 +67,7 @@
 
       start: function( event, options ) {
         contentDiv.style.display = "block";
-        if ($("#exposechat").is(':checked')) {
+        if ($("#exposenotes").is(':checked')) {
           contentDiv.setAttribute('aria-hidden', false);
         }
         if( options.direction === "down" ) {
