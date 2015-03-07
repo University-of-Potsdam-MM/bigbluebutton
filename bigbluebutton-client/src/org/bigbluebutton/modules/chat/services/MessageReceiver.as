@@ -26,10 +26,13 @@ package org.bigbluebutton.modules.chat.services
   import org.bigbluebutton.core.events.CoreEvent;
   import org.bigbluebutton.main.model.users.IMessageListener;
   import org.bigbluebutton.modules.chat.ChatConstants;
+    import org.bigbluebutton.modules.activitylog.ActivitylogConstants;
   import org.bigbluebutton.modules.chat.events.PrivateChatMessageEvent;
   import org.bigbluebutton.modules.chat.events.PublicChatMessageEvent;
+    import org.bigbluebutton.modules.activitylog.events.PublicActivitylogMessageEvent;
   import org.bigbluebutton.modules.chat.events.TranscriptEvent;
   import org.bigbluebutton.modules.chat.vo.ChatMessageVO;
+    import org.bigbluebutton.modules.activitylog.vo.ActivitylogMessageVO;
   
   public class MessageReceiver implements IMessageListener
   {
@@ -47,32 +50,32 @@ package org.bigbluebutton.modules.chat.services
     {
       switch (messageName) {
         case "ChatReceivePublicMessageCommand":
-          handleChatReceivePublicMessageCommand(message);
+          handleChatReceivePublicMessageCommand(messageName,message);
           break;			
         case "ChatReceivePrivateMessageCommand":
-          handleChatReceivePrivateMessageCommand(message);
+          handleChatReceivePrivateMessageCommand(messageName,message);
           break;	
         case "ChatRequestMessageHistoryReply":
-          handleChatRequestMessageHistoryReply(message);
+          handleChatRequestMessageHistoryReply(messageName,message);
           break;	
         default:
           //   LogUtil.warn("Cannot handle message [" + messageName + "]");
       }
     }
     
-    private function handleChatRequestMessageHistoryReply(message:Object):void {
+    private function handleChatRequestMessageHistoryReply(messageName:String, message:Object):void {
       trace(LOG + "Handling chat history message [" + message.msg + "]");
       var chats:Array = JSON.parse(message.msg) as Array;
       
       for (var i:int = 0; i < chats.length; i++) {
-        handleChatReceivePublicMessageCommand(chats[i]);
+        handleChatReceivePublicMessageCommand(messageName, chats[i]);
       }
          
       var pcEvent:TranscriptEvent = new TranscriptEvent(TranscriptEvent.TRANSCRIPT_EVENT);
       dispatcher.dispatchEvent(pcEvent);
     }
         
-    private function handleChatReceivePublicMessageCommand(message:Object):void {
+    private function handleChatReceivePublicMessageCommand(messageName:String, message:Object):void {
       trace(LOG + "Handling public chat message [" + message.message + "]");
       
       var msg:ChatMessageVO = new ChatMessageVO();
@@ -94,9 +97,24 @@ package org.bigbluebutton.modules.chat.services
       var pcCoreEvent:CoreEvent = new CoreEvent(EventConstants.NEW_PUBLIC_CHAT);
       pcCoreEvent.message = message;
       dispatcher.dispatchEvent(pcCoreEvent);
+
+	var msg2:ActivitylogMessageVO = new ActivitylogMessageVO();
+        msg2.activitylogType = ActivitylogConstants.PUBLIC_ACTIVITYLOG;
+        msg2.fromUserID = " ";
+        msg2.fromUsername = "Public Chat";
+        msg2.fromColor = "86187";
+        msg2.fromLang = "en";
+        msg2.fromTime = new Date().getTime();
+        msg2.fromTimezoneOffset = new Date().getTimezoneOffset();
+        msg2.toUserID = " ";
+        msg2.toUsername = " ";
+	msg2.message = message.fromUsername + ": " + message.message; 
+        var pcEventc:PublicActivitylogMessageEvent = new PublicActivitylogMessageEvent(PublicActivitylogMessageEvent.PUBLIC_ACTIVITYLOG_MESSAGE_EVENT);
+        pcEventc.message = msg2;
+        dispatcher.dispatchEvent(pcEventc);
     }
     
-    private function handleChatReceivePrivateMessageCommand(message:Object):void {
+    private function handleChatReceivePrivateMessageCommand(messageName:String, message:Object):void {
       trace(LOG + "Handling private chat message");
       
       var msg:ChatMessageVO = new ChatMessageVO();
@@ -117,7 +135,22 @@ package org.bigbluebutton.modules.chat.services
       
       var pcCoreEvent:CoreEvent = new CoreEvent(EventConstants.NEW_PRIVATE_CHAT);
       pcCoreEvent.message = message;
-      dispatcher.dispatchEvent(pcCoreEvent);      
+      dispatcher.dispatchEvent(pcCoreEvent);  
+
+	var msg3:ActivitylogMessageVO = new ActivitylogMessageVO();
+        msg3.activitylogType = ActivitylogConstants.PUBLIC_ACTIVITYLOG;
+        msg3.fromUserID = " ";
+        msg3.fromUsername = "Private Chat";
+        msg3.fromColor = "86187";
+        msg3.fromLang = "en";
+        msg3.fromTime = new Date().getTime();
+        msg3.fromTimezoneOffset = new Date().getTimezoneOffset();
+        msg3.toUserID = " ";
+        msg3.toUsername = " ";
+	msg3.message = message.fromUsername + ": " + message.message; 
+        var pcEventc:PublicActivitylogMessageEvent = new PublicActivitylogMessageEvent(PublicActivitylogMessageEvent.PUBLIC_ACTIVITYLOG_MESSAGE_EVENT);
+        pcEventc.message = msg3;
+        dispatcher.dispatchEvent(pcEventc);    
     }
   }
 }

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+
+BigBlueButton open source conferencing system - http://www.bigbluebutton.org/
+
+Copyright (c) 2012 BigBlueButton Inc. and by respective authors (see below).
+
+This program is free software; you can redistribute it and/or modify it under the
+terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 3.0 of the License, or (at your option) any later
+version.
+
+BigBlueButton is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along
+with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
+
+-->
+
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" 
+         xmlns:mate="http://mate.asfusion.com/"
+         implements="org.bigbluebutton.modules.activitylog.views.IActivitylogTab"
+         creationComplete="init()">
+
+    <mx:Script>
+        <![CDATA[
+            import com.asfusion.mate.events.Dispatcher;
+            import org.bigbluebutton.util.i18n.ResourceUtil;
+	    import org.bigbluebutton.main.events.ShortcutEvent;//2
+            import org.bigbluebutton.modules.activitylog.model.ActivitylogOptions;
+	    import org.bigbluebutton.modules.activitylog.events.ActivitylogOptionsEvent;
+	    import org.bigbluebutton.modules.activitylog.events.PublicActivitylogMessageEvent;
+	    import org.bigbluebutton.modules.activitylog.vo.ActivitylogMessageVO;
+	    import org.bigbluebutton.modules.activitylog.ActivitylogConstants;
+	    import org.bigbluebutton.modules.activitylog.services.DataProvider;
+
+            [Bindable] public var activitylogView:ActivitylogView;
+            [Bindable] private var fontSizes:Array = ['8', '10', '12', '14', '16', '18'];
+            [Bindable] public var activitylogOptions:ActivitylogOptions = new ActivitylogOptions();		
+
+            private function init():void{ }
+            public function focusToTextMessageArea():void { }            
+            public function accessibleClick(event:KeyboardEvent):void{ }
+            
+            private function changeFontSize():void {
+                var e:ActivitylogOptionsEvent = new ActivitylogOptionsEvent(ActivitylogOptionsEvent.CHANGE_FONT_SIZE);
+                e.fontSize = int(cmbFontSize.selectedItem);
+                dispatchEvent(e);
+            }
+            
+	    private function throwFilterEvent(tag:String, selected:Boolean): void {
+		var msg:ActivitylogMessageVO = new ActivitylogMessageVO();
+		msg.fromUsername = "Filter";
+		msg.message = tag+","+selected.toString();
+		var e:PublicActivitylogMessageEvent = new PublicActivitylogMessageEvent(PublicActivitylogMessageEvent.PUBLIC_ACTIVITYLOG_MESSAGE_EVENT);
+		e.message = msg;
+		dispatchEvent(e);
+	    }
+
+	    private function throwSaveFileEvent(): void {
+		var sfmsg:ActivitylogMessageVO = new ActivitylogMessageVO();
+		sfmsg.fromUsername = "Save File";
+		sfmsg.message = " ";
+		var ev:PublicActivitylogMessageEvent = new PublicActivitylogMessageEvent(PublicActivitylogMessageEvent.PUBLIC_ACTIVITYLOG_MESSAGE_EVENT);
+		ev.message = sfmsg;
+		dispatchEvent(ev);
+	    }
+
+	    private function throwSaveWithQueriesEvent(): void {
+		DataProvider.setSaveWithQueries(cbSaveWithQueries.selected);
+	    }
+
+	    private function throwHelpInfoEvent(): void {
+		var himsg:ActivitylogMessageVO = new ActivitylogMessageVO();
+		himsg.fromUsername = "Help Info";
+		himsg.message = " ";
+		var evt:PublicActivitylogMessageEvent = new PublicActivitylogMessageEvent(PublicActivitylogMessageEvent.PUBLIC_ACTIVITYLOG_MESSAGE_EVENT);
+		evt.message = himsg;
+		dispatchEvent(evt);
+
+		var scevent:ShortcutEvent = new ShortcutEvent(ShortcutEvent.FOCUS_ACTIVITYLOG_BOX);
+		dispatchEvent(scevent);
+	    }
+     
+        ]]>
+    </mx:Script>
+    
+    <mx:HBox width="100%" height="100%">
+        <mx:VBox  height="100%" width="50%" enabled="true">
+            <mx:VBox id="optionsBox" height="100%" width="50%" >
+                <mx:Label text="{ResourceUtil.getInstance().getString('bbb.activitylog.activitylogOptions')}" />
+                <mx:HBox width="100%">
+                    <mx:Label text="{ResourceUtil.getInstance().getString('bbb.activitylog.fontSize')}" />
+                    <mx:ComboBox width="60" id="cmbFontSize" dataProvider="{fontSizes}" close="changeFontSize()" selectedIndex="1" toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.cmbFontSize.toolTip')}"/>
+                </mx:HBox>
+		<mx:HBox width="100%">
+			<mx:Label text="{ResourceUtil.getInstance().getString('bbb.activitylog.label.save')}" />
+			<mx:Button label="{ResourceUtil.getInstance().getString('bbb.activitylog.saveBtn')}" id="saveBtn" height="20"
+		         	styleName="activitylogControlBarSendButtonStyle"
+		         	toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.saveBtn.toolTip')}" 
+		         	click="throwSaveFileEvent()" />
+			<mx:CheckBox id="cbSaveWithQueries" 
+				selected="{DataProvider.cbSaveWithQueries}" 
+				label="{ResourceUtil.getInstance().getString('bbb.activitylog.label.cb.SaveWithQueries')}"
+				click="throwSaveWithQueriesEvent()" 
+				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.QUERY')}"/>
+		</mx:HBox>
+
+		<mx:HBox width="100%">
+			<mx:Label text="{ResourceUtil.getInstance().getString('bbb.activitylog.label.help')}" />
+			<mx:Button label="{ResourceUtil.getInstance().getString('bbb.activitylog.helpBtn')}" id="helpBtn" height="20"
+		         	styleName="activitylogControlBarSendButtonStyle"
+		         	toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.helpBtn.toolTip')}" 
+		         	click="throwHelpInfoEvent()" />
+		</mx:HBox>
+		
+		<mx:VBox width="100%" paddingLeft="10">
+			<mx:Label text="{ResourceUtil.getInstance().getString('bbb.activitylog.label.filter')}" />
+			<mx:CheckBox id="cbUser" 
+				selected="{DataProvider.cbUser}" 
+				label="{ResourceUtil.getInstance().getString('bbb.activitylog.label.cb.USER')}"
+				click="throwFilterEvent(&apos;USER&apos;,cbUser.selected)" 
+				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.USER')}"/>
+			<mx:CheckBox id="cbBoard" 
+				selected="{DataProvider.cbBoard}" 
+				label="{ResourceUtil.getInstance().getString('bbb.activitylog.label.cb.BOARD')}"
+				click="throwFilterEvent(&apos;BOARD&apos;,cbBoard.selected)" 
+				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.BOARD')}"/>
+			<mx:CheckBox id="cbQuery" 
+				selected="{DataProvider.cbQuery}" 
+				label="{ResourceUtil.getInstance().getString('bbb.activitylog.label.cb.QUERY')}"
+				click="throwFilterEvent(&apos;QUERY&apos;,cbQuery.selected)" 
+				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.QUERY')}"/>
+			<mx:CheckBox id="cbMeeting" 
+				selected="{DataProvider.cbMeeting}" 
+				label="{ResourceUtil.getInstance().getString('bbb.activitylog.label.cb.MEETING')}"
+				click="throwFilterEvent(&apos;MEETING&apos;,cbMeeting.selected)" 
+				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.MEETING')}"/>
+			<mx:CheckBox id="cbPubChat" 
+				selected="{DataProvider.cbPubChat}" 
+				label="{ResourceUtil.getInstance().getString('bbb.activitylog.label.cb.PUBCHAT')}"
+				click="throwFilterEvent(&apos;PUBCHAT&apos;,cbPubChat.selected)" 
+				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.PUBCHAT')}"/>
+			<mx:CheckBox id="cbPrivChat" 
+				selected="{DataProvider.cbPrivChat}" 
+				label="{ResourceUtil.getInstance().getString('bbb.activitylog.label.cb.PRIVCHAT')}" 
+				click="throwFilterEvent(&apos;PRIVCHAT&apos;,cbPrivChat.selected)" 
+				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.PRIVCHAT')}"/>
+		</mx:VBox>
+
+            </mx:VBox>
+        </mx:VBox>
+    </mx:HBox>	
+</mx:VBox>

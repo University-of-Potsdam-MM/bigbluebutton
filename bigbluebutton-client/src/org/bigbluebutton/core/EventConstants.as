@@ -73,5 +73,12 @@ package org.bigbluebutton.core
     public static const CONVERT_SUCCESS:String                  = "ConversionSuccessEvent";
     public static const CONVERT_UPDATE:String                   = "ConversionProgressEvent";
 
+    // Activitylog EventConstants
+    public static const SEND_PUBLIC_ACTIVITYLOG_REQ:String       = 'SendPublicActivitylogRequest';
+    public static const SEND_PRIVATE_ACTIVITYLOG_REQ:String      = 'SendPrivateActivitylogRequest';
+    public static const NEW_PRIVATE_ACTIVITYLOG:String           = 'NewPrivateActivitylogEvent';
+    public static const NEW_PUBLIC_ACTIVITYLOG:String            = 'NewPublicActivitylogEvent';
+    public static const START_PRIVATE_ACTIVITYLOG:String         = "StartPrivateActivitylogEvent";
+
   }
 }

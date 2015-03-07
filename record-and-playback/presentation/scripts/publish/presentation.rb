@@ -777,6 +777,172 @@ def processChatMessages
 	end
 end
 
+def processActivitylog
+	BigBlueButton.logger.info("Processing activitylog events")
+	# Create Activitylog.xml
+	$activitylog_doc = Nokogiri::XML::Builder.new do |xml|
+		$xml = xml
+		$xml.popcorn {
+			# Process events. 
+			current_time = 0
+			whiteboardEvents = Hash.new
+			shapeEvents = Hash.new
+			eventsOrderedByTimes = Hash.new #chat-time
+			slideChangeEvents = Hash.new
+			presenterChangeEvents = Hash.new
+			deskshareEvents = Hash.new
+			
+			$rec_events.each do |re|
+				$activitaty_log_events .each do |node|
+					if (node[:timestamp].to_i >= re[:start_timestamp] and node[:timestamp].to_i <= re[:stop_timestamp])
+						# differentiate the activitys
+						case node.xpath("./@eventname").text()
+						when "PublicChatEvent"
+							chat_start = ( translateTimestamp(node[:timestamp]) / 1000).to_i
+							
+							helper = Hash.new
+							helper[chat_start] = Hash.new
+							helper[chat_start][:activity] =  "[Chat]"
+							helper[chat_start][:value] = node.xpath(".//sender")[0].text()
+							helper[chat_start][:message] = BigBlueButton::Events.linkify(node.xpath(".//message")[0].text())
+							
+							eventsOrderedByTimes = concatTwoHashs(eventsOrderedByTimes, helper)
+						when "AddShapeEvent" 
+							if(!(node.xpath(".//type")[0].text().eql? "text"))
+								shape_start = ( translateTimestamp(node[:timestamp]) / 1000).to_i
+								shape_id = node.xpath(".//id")[0].text()							
+						
+								helper = Hash.new
+								helper[shape_id] = Hash.new
+								helper[shape_id][:activity] =  "[AddShape]"
+								helper[shape_id][:value] = "slide "+ node.xpath(".//pageNumber")[0].text()
+								helper[shape_id][:message] = node.xpath(".//type")[0].text()
+								helper[shape_id][:in] = shape_start
+								
+								shapeEvents = shapeEvents.merge(helper)
+							end	
+						when "ModifyTextEvent"
+							if(node.xpath(".//text")[0].text() != "")
+								whiteboard_start = ( translateTimestamp(node[:timestamp]) / 1000).to_i
+								whiteboard_id = node.xpath(".//id")[0].text()
+					
+								helper = Hash.new
+								helper[whiteboard_id] = Hash.new
+								helper[whiteboard_id][:activity] =  "[ModifyText]"
+								helper[whiteboard_id][:value] = "slide "+ node.xpath(".//pageNumber")[0].text()
+								helper[whiteboard_id][:message] = node.xpath(".//text")[0].text()
+								helper[whiteboard_id][:in] = whiteboard_start
+								
+								whiteboardEvents = whiteboardEvents.merge(helper)
+							end	
+						when "GotoSlideEvent"
+							slide_start = ( translateTimestamp(node[:timestamp]) / 1000).to_i
+				
+							helper = Hash.new
+							helper[slide_start] = Hash.new
+							helper[slide_start][:activity] =  "[GotoSlide]"
+							helper[slide_start][:value] = ""
+							helper[slide_start][:message] = "slide " + node.xpath(".//slide")[0].text()
+							
+							slideChangeEvents = concatTwoHashs(slideChangeEvents, helper)
+						when "ParticipantStatusChangeEvent" 
+							if(node.xpath(".//status")[0].text() == "presenter" && node.xpath(".//value")[0].text() == "true") 
+								presenter_name =  userIdToName(node.xpath(".//userId")[0].text())
+								presenter_start = ( translateTimestamp(node[:timestamp]) / 1000).to_i
+				
+								helper = Hash.new
+								helper[presenter_start] = Hash.new
+								helper[presenter_start][:activity] =  "[ParticipantStatus]"
+								helper[presenter_start][:value] = "new presenter"
+								helper[presenter_start][:message] = presenter_name
+								
+								presenterChangeEvents = concatTwoHashs(presenterChangeEvents, helper)
+							end	
+						when "DeskshareStartedEvent", "DeskshareStoppedEvent"
+							deskshare_start = ( translateTimestamp(node[:timestamp]) / 1000).to_i
+				
+							helper = Hash.new
+							helper[deskshare_start] = Hash.new
+							helper[deskshare_start][:activity] =  "[Deskshare]"
+							if(node.xpath("./@eventname").text() == "DeskshareStartedEvent" )
+								helper[deskshare_start][:message] = "started"
+							else
+								helper[deskshare_start][:message] = "stopped"
+							end
+							helper[deskshare_start][:value] = ""
+							
+							deskshareEvents = concatTwoHashs(deskshareEvents, helper)	
+						end
+					end
+				end
+				current_time += re[:stop_timestamp] - re[:start_timestamp]
+			end
+			eventsOrderedByTimes = concatTwoHashs(orderTimes(shapeEvents), eventsOrderedByTimes)
+			eventsOrderedByTimes = concatTwoHashs(orderTimes(whiteboardEvents), eventsOrderedByTimes)
+			eventsOrderedByTimes = concatTwoHashs(slideChangeEvents, eventsOrderedByTimes)
+			eventsOrderedByTimes = concatTwoHashs(presenterChangeEvents, eventsOrderedByTimes)
+			eventsOrderedByTimes = concatTwoHashs(deskshareEvents, eventsOrderedByTimes)
+			
+			eventsOrderedByTimes.sort.each do |time, allValues|
+				allValues.each do |values|
+					$xml.activitylogTimeline(:in => time, :direction => :down, :activity => values[:activity], :value => values[:value], :message => values[:message], :target => :activitylog )
+				end
+			end
+		}
+	end
+end
+
+
+def orderTimes(eventTimes)
+	orderedEvents = Hash.new
+	if(eventTimes.nil? || eventTimes.empty?)
+		return orderedEvents
+	end
+
+	eventTimes.each do |id, values|
+		helper = Hash.new
+		if(orderedEvents.has_key?(values[:in]))
+			helper[:activity] = values[:activity]
+			helper[:value] = values[:value]
+			helper[:message] = values[:message]
+			orderedEvents[values[:in]].push(helper)
+		else
+			helper[:activity] = values[:activity]
+			helper[:value] = values[:value]
+			helper[:message] = values[:message]
+			orderedEvents.store(values[:in], [helper])
+		end
+	end
+	return orderedEvents
+end
+
+def concatTwoHashs(h1, h2)
+	result = h1
+	h2.each do |key, values|
+		if(h1 != nil && h1.has_key?(key))
+			result[key].push(values)
+		else
+			if (values.kind_of?(Array))
+				result.store(key, values)
+			else
+				result.store(key,[values])
+			end
+		end
+	end
+	return result
+end
+
+def userIdToName(userId)
+	$assign_presenter_events.each do |node|
+		if(node.xpath("./@eventname").text() == "AssignPresenterEvent")
+			if(node.xpath(".//userid")[0].text() == userId)
+				return node.xpath(".//name")[0].text() 
+			end		
+		end
+	end
+	return "<?>"
+end
+
 $vbox_width = 1600
 $vbox_height = 1200
 $magic_mystery_number = 2
@@ -915,7 +1081,7 @@ if ($playback == "presentation")
 			b.end_time(real_end_time)
 			b.playback {
 				b.format("presentation")
-				b.link("http://#{playback_host}/playback/presentation/0.9.0/playback.html?meetingId=#{$meeting_id}")
+				b.link("http://#{playback_host}/playback/presentation/playback.html?meetingId=#{$meeting_id}")
 				b.processing_time("#{processing_time}")
 				b.duration("#{recording_time}")
 			}
@@ -933,6 +1099,8 @@ if ($playback == "presentation")
 		# Gathering all the events from the events.xml
 		$slides_events = @doc.xpath("//event[@eventname='GotoSlideEvent' or @eventname='SharePresentationEvent']")
 		$chat_events = @doc.xpath("//event[@eventname='PublicChatEvent']")
+		$activitaty_log_events = @doc.xpath("//event[@eventname='PublicChatEvent' or @eventname='ModifyTextEvent'  or @eventname='AddShapeEvent' or @eventname='GotoSlideEvent' or @eventname='ParticipantStatusChangeEvent' or @eventname='DeskshareStartedEvent' or @eventname='DeskshareStoppedEvent'] ") #for creation of activitaty log
+		$assign_presenter_events = @doc.xpath("//event[@eventname='AssignPresenterEvent']") 
 		$shape_events = @doc.xpath("//event[@eventname='AddShapeEvent' or @eventname='ModifyTextEvent']") # for the creation of shapes
 		$panzoom_events = @doc.xpath("//event[@eventname='ResizeAndMoveSlideEvent']") # for the action of panning and/or zooming
 		$cursor_events = @doc.xpath("//event[@eventname='CursorMoveEvent']")
@@ -952,6 +1120,8 @@ if ($playback == "presentation")
 		
 		processChatMessages()
 		
+		processActivitylog()
+		
 		processShapesAndClears()
 		
 		processPanAndZooms()
@@ -960,6 +1130,8 @@ if ($playback == "presentation")
 		
 		# Write slides.xml to file
 		File.open("#{package_dir}/slides_new.xml", 'w') { |f| f.puts $slides_doc.to_xml }
+		# Write activitaylog.xml to file
+		File.open("#{package_dir}/activitylog.xml", 'w') { |f| f.puts $activitylog_doc.to_xml }		
 		# Write shapes.svg to file
 		File.open("#{package_dir}/#{$shapes_svg_filename}", 'w') { |f| f.puts $shapes_svg.to_xml.gsub(%r"\s*\<g.*/\>", "") } #.gsub(%r"\s*\<g.*\>\s*\</g\>", "") }
 		
