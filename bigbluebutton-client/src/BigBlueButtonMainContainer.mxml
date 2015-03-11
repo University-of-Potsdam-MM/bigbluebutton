@@ -28,12 +28,14 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   width="100%" height="100%"
   horizontalScrollPolicy="off"
   verticalScrollPolicy="off"
-  creationComplete="init()">
+  creationComplete="init()"
+  addedToStage="hotkeyCapture()">
   
   <mx:Script>
     <![CDATA[
 		import com.asfusion.mate.events.Dispatcher;
-		
+	
+    import com.adobe.serialization.json.JSON;	
 		import flash.events.Event;
     import mx.controls.Alert;
 		
@@ -69,15 +71,33 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       private var hist:HistoryManager
       
       private var globalDispatcher:Dispatcher = new Dispatcher();
+
+      private var customKeyCombos:Array;
       
       protected function init():void {
         setupTooltips();
         setupAPI();
         EventBroadcaster.getInstance().addEventListener("configLoadedEvent", configLoadedEventHandler);
-        EventBroadcaster.getInstance().addEventListener(Event.ADDED_TO_STAGE, appComplete);
         BBB.initConfigManager();
         globalModifier = ExternalInterface.call("determineGlobalModifier"); 
+        customKeyCombos = getCustomKeyCombos();
+        ExternalInterface.addCallback("notifyCustomKeysChanged", onCustomKeysChanged);
         hotkeyCapture();
+      }
+
+      private function onCustomKeysChanged(arg0:Boolean) {
+        if (arg0) {
+          customKeyCombos = getCustomKeyCombos();
+        }
+      }
+
+      private function getCustomKeyCombos():Array {
+        var keyCombosJson:String = ExternalInterface.call('getCustomKeySettings');
+        if (keyCombosJson) {
+          return JSON.parse(keyCombosJson);
+        }
+        if (keyCombos == null) loadKeyCombos(globalModifier);
+        return keyCombos;
       }
       
       private function configLoadedEventHandler(e:Event):void {
@@ -184,15 +204,18 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       
       // Handle general-access hotkeys, regardless of what window the user is focused in
       private function handleKeyDown(e:KeyboardEvent) :void {
-        ExternalInterface.call("alert", 'key press!');
         if (keyCombos == null) loadKeyCombos(globalModifier);
         
         var keyPress:String = (e.ctrlKey  ? "control+" : "") + (e.shiftKey ? "shift+"   : "") + (e.altKey   ? "alt+"     : "") + e.keyCode;
-        
         if (e.keyCode < 64 || e.keyCode > 90){
           trace("Keypress debugging: KeyCode " + e.keyCode + " is nonalphabetic (probably)");
         }
-        
+
+        if(customKeyCombos[keyPress]) {
+          ExternalInterface.call("alert", 'key press!' + keyPress);
+          keyPress = customKeyCombos[keyPress];
+        }
+
         if (keyCombos[keyPress]) {
           //LogUtil.debug("Caught shortcut: " + keyCombos[keyPress]);
           globalDispatcher.dispatchEvent(new ShortcutEvent(keyCombos[keyPress]));
