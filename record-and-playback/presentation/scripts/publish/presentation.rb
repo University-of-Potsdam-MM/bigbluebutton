@@ -802,9 +802,9 @@ def processActivitylog
 							
 							helper = Hash.new
 							helper[chat_start] = Hash.new
-							helper[chat_start][:activity] =  "[Chat]"
-							helper[chat_start][:value] = node.xpath(".//sender")[0].text()
-							helper[chat_start][:message] = BigBlueButton::Events.linkify(node.xpath(".//message")[0].text())
+							helper[chat_start][:event] = "[Pubchat]"
+							helper[chat_start][:activity] =  "[PUBCHAT]"
+							helper[chat_start][:value] = node.xpath(".//sender")[0].text()+": " + BigBlueButton::Events.linkify(node.xpath(".//message")[0].text())
 							
 							eventsOrderedByTimes = concatTwoHashs(eventsOrderedByTimes, helper)
 						when "AddShapeEvent" 
@@ -814,9 +814,14 @@ def processActivitylog
 						
 								helper = Hash.new
 								helper[shape_id] = Hash.new
-								helper[shape_id][:activity] =  "[AddShape]"
-								helper[shape_id][:value] = "slide "+ node.xpath(".//pageNumber")[0].text()
-								helper[shape_id][:message] = node.xpath(".//type")[0].text()
+								helper[shape_id][:event] = "[AddShape]"
+								helper[shape_id][:activity] =  "[BOARD]"
+								color = getColorName(node.xpath(".//color")[0].text())
+								if(color != "")
+									color = color+" "
+								end
+								helper[shape_id][:value] = "Presenter has drawn a " + color + node.xpath(".//type")[0].text() + " on the whiteboard on slide " + node.xpath(".//pageNumber")[0].text() + "."
+								
 								helper[shape_id][:in] = shape_start
 								
 								shapeEvents = shapeEvents.merge(helper)
@@ -828,9 +833,13 @@ def processActivitylog
 					
 								helper = Hash.new
 								helper[whiteboard_id] = Hash.new
-								helper[whiteboard_id][:activity] =  "[ModifyText]"
-								helper[whiteboard_id][:value] = "slide "+ node.xpath(".//pageNumber")[0].text()
-								helper[whiteboard_id][:message] = node.xpath(".//text")[0].text()
+								helper[whiteboard_id][:event] = "[ModifyText]"
+								helper[whiteboard_id][:activity] =  "[BOARD]"
+								color = getColorName(node.xpath(".//fontColor")[0].text())
+								if(color != "")
+									color = " and font color "+color
+								end
+								helper[whiteboard_id][:value] = "Presenter has written the text \"" + node.xpath(".//text")[0].text() + "\" in font size " + node.xpath(".//fontSize")[0].text() + color + " on the whiteboard on slide " + node.xpath(".//pageNumber")[0].text() + "."
 								helper[whiteboard_id][:in] = whiteboard_start
 								
 								whiteboardEvents = whiteboardEvents.merge(helper)
@@ -840,9 +849,9 @@ def processActivitylog
 				
 							helper = Hash.new
 							helper[slide_start] = Hash.new
-							helper[slide_start][:activity] =  "[GotoSlide]"
-							helper[slide_start][:value] = ""
-							helper[slide_start][:message] = "slide " + node.xpath(".//slide")[0].text()
+							helper[slide_start][:event] = "[GotoSlide]"
+							helper[slide_start][:activity] =  "[BOARD]"
+							helper[slide_start][:value] = "Presentation changed to slide " + node.xpath(".//slide")[0].text() + "."
 							
 							slideChangeEvents = concatTwoHashs(slideChangeEvents, helper)
 						when "ParticipantStatusChangeEvent" 
@@ -852,9 +861,9 @@ def processActivitylog
 				
 								helper = Hash.new
 								helper[presenter_start] = Hash.new
-								helper[presenter_start][:activity] =  "[ParticipantStatus]"
-								helper[presenter_start][:value] = "new presenter"
-								helper[presenter_start][:message] = presenter_name
+								helper[presenter_start][:event] = "[ParticipantStatus]"
+								helper[presenter_start][:activity] =  "[USER]"
+								helper[presenter_start][:value] = presenter_name + " is from now the new presenter."
 								
 								presenterChangeEvents = concatTwoHashs(presenterChangeEvents, helper)
 							end	
@@ -863,13 +872,13 @@ def processActivitylog
 				
 							helper = Hash.new
 							helper[deskshare_start] = Hash.new
-							helper[deskshare_start][:activity] =  "[Deskshare]"
+							helper[deskshare_start][:event] = "[Deskshare]"
+							helper[deskshare_start][:activity] =  "[DESKSHARE]"
 							if(node.xpath("./@eventname").text() == "DeskshareStartedEvent" )
-								helper[deskshare_start][:message] = "started"
+								helper[deskshare_start][:value] = "The presenter started sharing his desktop."
 							else
-								helper[deskshare_start][:message] = "stopped"
+								helper[deskshare_start][:value] = "The presenter stopped sharing his desktop."
 							end
-							helper[deskshare_start][:value] = ""
 							
 							deskshareEvents = concatTwoHashs(deskshareEvents, helper)	
 						end
@@ -885,7 +894,7 @@ def processActivitylog
 			
 			eventsOrderedByTimes.sort.each do |time, allValues|
 				allValues.each do |values|
-					$xml.activitylogTimeline(:in => time, :direction => :down, :activity => values[:activity], :value => values[:value], :message => values[:message], :target => :activitylog )
+					$xml.activitylogTimeline(:in => time, :direction => :down, :event => values[:event], :activity => values[:activity], :value => values[:value], :target => :activitylog )
 				end
 			end
 		}
@@ -902,14 +911,14 @@ def orderTimes(eventTimes)
 	eventTimes.each do |id, values|
 		helper = Hash.new
 		if(orderedEvents.has_key?(values[:in]))
+			helper[:event] = values[:event]
 			helper[:activity] = values[:activity]
 			helper[:value] = values[:value]
-			helper[:message] = values[:message]
 			orderedEvents[values[:in]].push(helper)
 		else
+			helper[:event] = values[:event]
 			helper[:activity] = values[:activity]
 			helper[:value] = values[:value]
-			helper[:message] = values[:message]
 			orderedEvents.store(values[:in], [helper])
 		end
 	end
@@ -941,6 +950,40 @@ def userIdToName(userId)
 		end
 	end
 	return "<?>"
+end
+
+#same translation as in bigbluebutton-client/locale/en_US/bbbResources.properties
+def getColorName(colorDec)
+	case colorDec
+	when "0"
+		colorName = "black"
+	when "16777215"
+		colorName = "white"
+	when "16711680"
+		colorName = "red"
+	when "16746496"
+		colorName = "orange"
+	when "13434624"
+		colorName = "lightgreen"
+	when "65280"
+		colorName = "green"
+	when "65416"
+		colorName = "cyan"
+	when "65535"
+		colorName = "lightblue"
+	when "35071"
+		colorName = "middleblue"
+	when "255"
+		colorName = "blue"
+	when "8913151"
+		colorName = "purple"
+	when "16711935"
+		colorName = "pink"
+	when "12632256"
+		colorName = "grey"						
+	else
+		colorName = ""	#undefined
+	end
 end
 
 $vbox_width = 1600

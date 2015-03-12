@@ -61,13 +61,13 @@
     //  Default to empty if not used
     //options.innerHTML = options.innerHTML || "";
 
-    contentDiv.innerHTML = "<strong>"+options.activity+" "+options.value+": </strong>" + options.message;
+    contentDiv.innerHTML = "<strong>" + options.activity + "</strong> " + options.value;
 
     return {
 
       start: function( event, options ) {
-        switch(options.activity){
-        	case "[Chat]":
+        switch(options.event){
+        	case "[Pubchat]":
         		showContent(contentDiv, ($("#activitylog_chat").is(':checked')));
         		break;
         	case "[AddShape]":
@@ -137,6 +137,11 @@
         label: "Message"
       },
       value: {
+        elem: "input",
+        type: "text",
+        label: "Message"
+      },
+      event: {
         elem: "input",
         type: "text",
         label: "Message"
