@@ -174,6 +174,28 @@ br{
 	padding:0px;
 	font-size:13px;
 }
+#activitylog{
+	margin: 0 auto;
+	padding: 0 10px;
+	border: 0px solid #ccc;
+	height: 300px;
+	overflow: auto;
+}
+#activitylog div{
+	padding:0px;
+	font-size:13px;
+}
+#settings{
+	margin: 0 auto;
+	padding: 0 10px;
+	border: 0px solid #ccc;
+	height: 300px;
+	overflow: auto;
+}
+#settings div{
+	padding:0px;
+	font-size:13px;
+}
 #big {display:none}
 #mid {display:none}
 

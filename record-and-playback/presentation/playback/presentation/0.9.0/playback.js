@@ -115,7 +115,7 @@ var MEETINGID = params['meetingId'];
 var RECORDINGS = "/presentation/" + MEETINGID;
 var SLIDES_XML = RECORDINGS + '/slides_new.xml';
 var SHAPES_SVG = RECORDINGS + '/shapes.svg';
-var NOTES_XML = RECORDINGS + '/notes.xml';
+var ACTIVITYLOG_XML = RECORDINGS + '/activitylog.xml';
 
 /*
  * Sets the title attribute in a thumbnail.
@@ -335,12 +335,9 @@ load_video = function(){
    time_manager.on( "timeupdate", function() {
     pc_webcam.currentTime( this.currentTime() );
    });*/
-   var timeline_sources = SLIDES_XML;
+   var timeline_sources = SLIDES_XML+", "+ACTIVITYLOG_XML;
    if (USER_NOTES_XML!="") {
    	timeline_sources = timeline_sources+", "+USER_NOTES_XML;
-   }
-   if(PUBLIC_NOTES_EXIST == true){
-     timeline_sources = timeline_sources + ", "+NOTES_XML;
    }
    video.setAttribute('data-timeline-sources', timeline_sources);
    //video.setAttribute('controls','');
@@ -375,12 +372,9 @@ load_audio = function() {
       audio.appendChild(webmsource);
       audio.appendChild(oggsource);
    }
-   var timeline_sources = SLIDES_XML;
+   var timeline_sources = SLIDES_XML+", "+ACTIVITYLOG_XML;
    if (USER_NOTES_XML!="") {
    	timeline_sources = timeline_sources+", "+USER_NOTES_XML;
-   }
-   if(PUBLIC_NOTES_EXIST == true){
-     timeline_sources = timeline_sources + ", "+NOTES_XML;
    }
    audio.setAttribute('data-timeline-sources', timeline_sources);
    
@@ -436,12 +430,31 @@ document.addEventListener( "DOMContentLoaded", function() {
 
   if (checkUrl(RECORDINGS + '/video/webcams.webm') == true){
       videoContainer = document.getElementById("audioRecordingWrapper").style.display = "none";
+      tabs = document.getElementById("tabs");
+      tabs.style.height = "290px";
+      activitylog = document.getElementById("activitylog");
+      activitylog.style.height = "255px";
+      chat = document.getElementById("chat");
+      chat.style.height = "255px";
+      notes = document.getElementById("notes");
+      notes.style.height = "255px";
+      settings = document.getElementById("settings");
+      settings.style.height = "255px";
+
       load_video();
   }else{
-      videoContainer = document.getElementById("videoRecordingWrapper").style.display = "none";       
+      videoContainer = document.getElementById("videoRecordingWrapper").style.display = "none";
+      tabs = document.getElementById("tabs");
+      tabs.style.height = "590px";
+      activitylog = document.getElementById("activitylog");
+      activitylog.style.height = "555px";
       chat = document.getElementById("chat");
-      chat.style.height = "600px";
-      chat.style.backgroundColor = "white";      
+      chat.style.height = "555px";
+      notes = document.getElementById("notes");
+      notes.style.height = "555px";
+      settings = document.getElementById("settings");
+      settings.style.height = "555px";
+
       load_audio();
   }
   

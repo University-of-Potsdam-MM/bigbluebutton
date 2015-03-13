@@ -34,7 +34,22 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   <script type="text/javascript" src="lib/popcorn-complete.min.js"></script>
   <script type="text/javascript" src="lib/popcorn.chattimeline.js"></script>
   <script type="text/javascript" src="lib/popcorn.notestimeline.js"></script>
+  <script type="text/javascript" src="lib/popcorn.activitylogtimeline.js"></script>
   <script type="text/javascript" src="advanced_playback.js"></script>
+  
+  
+  <script type="text/javascript">document.documentElement.className += " js";</script>
+  <link rel="stylesheet" href="css/slidingdoors/simple-sliding-doors.css" type="text/css" media="screen">
+  <script src="lib/jquery.tabs.js" type="text/javascript" charset="utf-8"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+  	$(".tabs").accessibleTabs({
+		tabhead:'h2',
+		fx:"fadeIn",
+		tabbody: '.tabbody'
+	});
+  });
+  </script> 
 
   <!--script type="text/javascript">
     jQuery(function() {
@@ -64,15 +79,56 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				<div id="slide" role="img" aria-labelledby="slideText"></div>
 				<div id="slideText" class="visually-hidden" aria-live="polite"></div>
 			</div>
-			<div id="chatAndMediaArea">
-				<h2 class="visually-hidden">Chat Messages</h2>
 
-				<input type="checkbox" name="exposechat" id="exposechat" value="exposechat" class="visually-hidden" checked="checked" />
-				<input type="radio" name="chatarea_type" id="chat_cb"  onchange="javascript:change_chatarea();" value="chat" checked="checked"/> chat
-				<input type="radio" name="chatarea_type" id="notes_cb" onchange="javascript:change_chatarea();" value="notes" /> notes
-				<label for="exposechat" class="visually-hidden">Read chat messages</label>
-				<div id="chat" aria-live="polite" role="region" aria-label="Chat messages"></div>
-				<div id="notes" aria-live="polite" role="region" aria-label="Notes" aria-hidden="true" style="height:0px;display: none"></div>
+			<div id="chatAndMediaArea">
+				<h2 class="visually-hidden">Text-Area</h2>
+				<div id="textArea"  aria-label="text area">
+					<div class="tabs" id="tabs">
+						<h2>Chat</h2>
+						<div class="tabbody" id="chat" aria-live="polite" aria-label="Chat messages" role="region"></div>
+						<h2>Notes</h2>
+						<div class="tabbody" id="notes" aria-live="polite" aria-label="Notes" role="region"></div>
+						<h2>Activitylog</h2>
+						<div class="tabbody" id="activitylog" aria-live="polite" aria-label="Activitylog" role="region"></div>
+						<h2>Settings</h2>
+						<div class="tabbody" id="settings" aria-label="settings" role="region">
+							<h3>Media-area Options:</h3>
+							<p>
+								<input type="checkbox" name="exposechat" id="exposechat" value="exposechat" checked="checked" />
+								<label for="exposechat">Read messages from chat-tab (screenreader)</label>
+							</p>
+							<p>
+								<input type="checkbox" name="exposenotes" id="exposenotes" value="exposenotes" checked="checked" />
+								<label for="exposenotes">Read messages from notes-tab (screenreader)</label>
+							</p>
+							<h3>Show in activitylog:</h4>
+							<p>
+								<input type="checkbox" name="activitylog_chat" id="activitylog_chat" value="activitylog_chat" checked="checked" />
+								<label for="activitylog_chat">PUBCHAT</label>
+							</p>
+							<p>
+								<input type="checkbox" name="activitylog_addShape" id="activitylog_addShape" value="activitylog_addShape" checked="checked" />
+								<label for="activitylog_addShape">BOARD (add shape)</label>	
+							</p>
+							<p>
+								<input type="checkbox" name="activitylog_modifyText" id="activitylog_modifyText" value="activitylog_modifyText" checked="checked" />
+								<label for="activitylog_modifyText">BOARD (modify text)</label>
+							</p>
+							<p>
+								<input type="checkbox" name="activitylog_gotoSlide" id="activitylog_gotoSlide" value="activitylog_gotoSlide" checked="checked" />
+								<label for="activitylog_gotoSlide">BOARD (goto slide)</label>
+							</p>
+							<p>
+								<input type="checkbox" name="activitylog_participantStatus" id="activitylog_participantStatus" value="activitylog_participantStatus" checked="checked" />
+								<label for="activitylog_participantStatus">USER</label>
+							</p>
+							<p>
+								<input type="checkbox" name="activitylog_deskshare" id="activitylog_deskshare" value="activitylog_deskshare" checked="checked" />
+								<label for="activitylog_deskshare">DESKSHARE</label>
+							</p>						
+						</div>	
+					</div>
+				</div>
 				<div id="videoRecordingWrapper" role="region" aria-label="Video">
 	<!--
 				  <video id="webcam" >You must use an HTML5 capable browser to view this page.

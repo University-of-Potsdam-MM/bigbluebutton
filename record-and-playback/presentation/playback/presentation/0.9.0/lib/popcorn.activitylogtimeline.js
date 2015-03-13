@@ -1,9 +1,9 @@
-// PLUGIN: NotesTimeline
+// PLUGIN: ActivitylogTimeline
 (function ( Popcorn ) {
 
   /**
      * mostly a copy of popcorn.chattimeline.js
-     * notes-timeline popcorn plug-in
+     * activitylog-timeline popcorn plug-in
      * Adds data associated with a certain time in the video, which creates a scrolling view of each item as the video progresses
      * Options parameter will need a start, target, title, and text
      * -Start is the time that you want this plug-in to execute
@@ -26,14 +26,14 @@
   */
 
   var i = 1;
- Popcorn.plugin( "notesTimeline" , function( options ) {
+ Popcorn.plugin( "activitylogTimeline" , function( options ) {
     var target = document.getElementById( options.target ),
         contentDiv = document.createElement( "div" ),
         goingUp = true;
 
     contentDiv.style.display = "none";
     contentDiv.setAttribute('aria-hidden', true);
-    contentDiv.id = "notesTimelineDiv" + i;
+    contentDiv.id = "activitylogTimelineDiv" + i;
     contentDiv.onclick = function() {goToSlide(options.start);Popcorn('#video').pause();};
     
     //  Default to up if options.direction is non-existant or not up or down
@@ -61,14 +61,32 @@
     //  Default to empty if not used
     //options.innerHTML = options.innerHTML || "";
 
-    contentDiv.innerHTML = "<strong>" + options.name + ":</strong>" + options.message;
+    contentDiv.innerHTML = "<strong>" + options.activity + "</strong> " + options.value;
 
     return {
 
       start: function( event, options ) {
-        contentDiv.style.display = "block";
-        if ($("#exposenotes").is(':checked')) {
-          contentDiv.setAttribute('aria-hidden', false);
+        switch(options.event){
+        	case "[Pubchat]":
+        		showContent(contentDiv, ($("#activitylog_chat").is(':checked')));
+        		break;
+        	case "[AddShape]":
+        		showContent(contentDiv, ($("#activitylog_addShape").is(':checked')));
+        		break;        		
+        	case "[ModifyText]":
+        		showContent(contentDiv, ($("#activitylog_modifyText").is(':checked')));
+        		break;
+        	case "[GotoSlide]":
+        		showContent(contentDiv, ($("#activitylog_gotoSlide").is(':checked')));
+        		break;        		
+        	case "[ParticipantStatus]":
+        		showContent(contentDiv, ($("#activitylog_participantStatus").is(':checked')));
+        		break;
+        	case "[Deskshare]":
+        		showContent(contentDiv, ($("#activitylog_deskshare").is(':checked')));
+        		break;
+        	default:
+        		showContent(contentDiv, true);       	        	        	
         }
         if( options.direction === "down" ) {
           target.scrollTop = target.scrollHeight;
@@ -113,6 +131,21 @@
         type: "text",
         label: "Message"
       },
+      activity: {
+        elem: "input",
+        type: "text",
+        label: "Message"
+      },
+      value: {
+        elem: "input",
+        type: "text",
+        label: "Message"
+      },
+      event: {
+        elem: "input",
+        type: "text",
+        label: "Message"
+      },
       direction: {
         elem: "select",
         options: [ "DOWN", "UP" ],
@@ -123,3 +156,12 @@
   });
 
 })( Popcorn );
+
+function showContent(content, show){
+	content.setAttribute('aria-hidden', !show);
+	if(show){
+		content.style.display = "block";
+	}else{
+		content.style.display = "none";
+	}
+}
