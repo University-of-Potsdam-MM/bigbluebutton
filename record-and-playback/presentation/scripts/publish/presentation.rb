@@ -777,6 +777,47 @@ def processChatMessages
 	end
 end
 
+def processPrivateNotes
+	BigBlueButton.logger.info("Processing private notes events")
+	# Create ID-notes.xml
+	# Process notes events.
+	current_time = 0
+	notesByUser = Hash.new
+	$rec_events.each do |re|
+		$private_notes_events.each do |node|
+			if (node[:timestamp].to_i >= re[:start_timestamp] and node[:timestamp].to_i <= re[:stop_timestamp])
+				notes_timestamp =  node[:timestamp]
+				notes_start = ( translateTimestamp(notes_timestamp) / 1000).to_i
+				user_id = node.xpath(".//userId")[0].text()
+				oneNotes = Hash.new
+				oneNotes[:name] = node.xpath(".//userName")[0].text()
+				oneNotes[:message] = BigBlueButton::Events.linkify(node.xpath(".//message")[0].text())
+				oneNotes[:in] = notes_start
+				notesByUser = addOneUserNote(user_id, oneNotes, notesByUser)
+			end
+		end
+		current_time += re[:stop_timestamp] - re[:start_timestamp]
+	end
+	return notesByUser
+end
+
+#######################################
+# appends one note to the appropriate #
+# list of notesByUser                 #
+# returns the new notesByUser         #
+#######################################
+def addOneUserNote(id, oneNote, notesByUser)
+	if(notesByUser.nil? or notesByUser.empty?)
+		notesByUser = Hash.new
+		notesByUser.store(id,[oneNote])
+	elsif(notesByUser.has_key?(id))
+		notesByUser[id].push(oneNote)
+	else
+		notesByUser.store(id,[oneNote])
+	end
+	return notesByUser	
+end
+
 def processActivitylog
 	BigBlueButton.logger.info("Processing activitylog events")
 	# Create Activitylog.xml
@@ -793,7 +834,7 @@ def processActivitylog
 			deskshareEvents = Hash.new
 			
 			$rec_events.each do |re|
-				$activitaty_log_events .each do |node|
+				$activity_log_events .each do |node|
 					if (node[:timestamp].to_i >= re[:start_timestamp] and node[:timestamp].to_i <= re[:stop_timestamp])
 						# differentiate the activitys
 						case node.xpath("./@eventname").text()
@@ -820,8 +861,11 @@ def processActivitylog
 								if(color != "")
 									color = color+" "
 								end
-								helper[shape_id][:value] = "Presenter has drawn a " + color + node.xpath(".//type")[0].text() + " on the whiteboard on slide " + node.xpath(".//pageNumber")[0].text() + "."
-								
+								if("pencil".eql?node.xpath(".//type")[0].text())
+									helper[shape_id][:value] = "Presenter has drawn with a " + color + node.xpath(".//type")[0].text() + " on the whiteboard on slide " + node.xpath(".//pageNumber")[0].text() + "."
+								else
+									helper[shape_id][:value] = "Presenter has drawn a " + color + node.xpath(".//type")[0].text() + " on the whiteboard on slide " + node.xpath(".//pageNumber")[0].text() + "."
+								end
 								helper[shape_id][:in] = shape_start
 								
 								shapeEvents = shapeEvents.merge(helper)
@@ -901,7 +945,10 @@ def processActivitylog
 	end
 end
 
-
+######################################
+# orders events by their timestamps  #
+# returns the events ordered by time #
+######################################
 def orderTimes(eventTimes)
 	orderedEvents = Hash.new
 	if(eventTimes.nil? || eventTimes.empty?)
@@ -925,6 +972,10 @@ def orderTimes(eventTimes)
 	return orderedEvents
 end
 
+################################
+# concatenates two hashes      #
+# return the concatenated hash #
+################################
 def concatTwoHashs(h1, h2)
 	result = h1
 	h2.each do |key, values|
@@ -941,6 +992,11 @@ def concatTwoHashs(h1, h2)
 	return result
 end
 
+####################################
+# returns the userName if the user #
+# has been presenter. Otherwise    #
+# "<?>" is returned.               #
+####################################
 def userIdToName(userId)
 	$assign_presenter_events.each do |node|
 		if(node.xpath("./@eventname").text() == "AssignPresenterEvent")
@@ -983,6 +1039,21 @@ def getColorName(colorDec)
 		colorName = "grey"						
 	else
 		colorName = ""	#undefined
+	end
+end
+
+def writePrivateNotesXml(notesByUser, package_dir)
+	BigBlueButton.logger.info("write private notes files")
+	notesByUser.each do |id, allValues|
+		$privateNotes_doc = Nokogiri::XML::Builder.new do |xml|
+			$xml = xml
+			$xml.popcorn {
+				allValues.each do |values|
+					$xml.notesTimeline(:in => values[:in], :direction => :down,  :name => values[:name], :message => values[:message], :target => :notes)
+				end
+			}
+		end
+		File.open("#{package_dir}/#{id}-notes.xml", 'w') { |f| f.puts $privateNotes_doc.to_xml }
 	end
 end
 
@@ -1142,7 +1213,8 @@ if ($playback == "presentation")
 		# Gathering all the events from the events.xml
 		$slides_events = @doc.xpath("//event[@eventname='GotoSlideEvent' or @eventname='SharePresentationEvent']")
 		$chat_events = @doc.xpath("//event[@eventname='PublicChatEvent']")
-		$activitaty_log_events = @doc.xpath("//event[@eventname='PublicChatEvent' or @eventname='ModifyTextEvent'  or @eventname='AddShapeEvent' or @eventname='GotoSlideEvent' or @eventname='ParticipantStatusChangeEvent' or @eventname='DeskshareStartedEvent' or @eventname='DeskshareStoppedEvent'] ") #for creation of activitaty log
+		$activity_log_events = @doc.xpath("//event[@eventname='PublicChatEvent' or @eventname='ModifyTextEvent'  or @eventname='AddShapeEvent' or @eventname='GotoSlideEvent' or @eventname='ParticipantStatusChangeEvent' or @eventname='DeskshareStartedEvent' or @eventname='DeskshareStoppedEvent'] ") #for creation of activitaty log
+		$private_notes_events = @doc.xpath("//event[@eventname='PrivateNotesEvent']")
 		$assign_presenter_events = @doc.xpath("//event[@eventname='AssignPresenterEvent']") 
 		$shape_events = @doc.xpath("//event[@eventname='AddShapeEvent' or @eventname='ModifyTextEvent']") # for the creation of shapes
 		$panzoom_events = @doc.xpath("//event[@eventname='ResizeAndMoveSlideEvent']") # for the action of panning and/or zooming
@@ -1165,12 +1237,16 @@ if ($playback == "presentation")
 		
 		processActivitylog()
 		
+		privateNotes = processPrivateNotes()
+		
 		processShapesAndClears()
 		
 		processPanAndZooms()
 		
 		processCursorEvents()
 		
+		# Write ID-notes.xml to file
+		writePrivateNotesXml(privateNotes, package_dir)		
 		# Write slides.xml to file
 		File.open("#{package_dir}/slides_new.xml", 'w') { |f| f.puts $slides_doc.to_xml }
 		# Write activitaylog.xml to file
