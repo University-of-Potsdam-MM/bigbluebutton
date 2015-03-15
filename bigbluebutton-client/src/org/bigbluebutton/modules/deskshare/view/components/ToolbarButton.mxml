@@ -25,6 +25,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	styleName="deskshareDefaultButtonStyle"
 	height="24"
 	toolTip="{ResourceUtil.getInstance().getString('bbb.toolbar.deskshare.toolTip.start')}"
+	accessibilityName="{ResourceUtil.getInstance().getString('bbb.toolbar.deskshare.toolTip.start.accessibilityName')}"
 	click="startDeskShare()"
 	mouseOver = "mouseOverHandler(event)"
 	mouseOut = "mouseOutHandler(event)"

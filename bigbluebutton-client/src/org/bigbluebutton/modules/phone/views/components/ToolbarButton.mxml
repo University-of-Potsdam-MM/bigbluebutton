@@ -27,6 +27,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	creationComplete="onCreationComplete()"
 	height="24"
 	toolTip="{ResourceUtil.getInstance().getString('bbb.toolbar.phone.toolTip.start')}"
+  accessibilityName="{ResourceUtil.getInstance().getString('bbb.toolbar.phone.toolTip.start.accessibilityName')}"
 	implements="org.bigbluebutton.common.IBbbToolbarComponent">
 
   <mate:Listener type="{FlashLeftVoiceConferenceEvent.LEFT_VOICE_CONFERENCE}" method="handleFlashLeftVoiceConferenceEvent" />
@@ -138,7 +139,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         trace(LOG + "onUserJoinedConference enabled=[" + enabled + "] selected=[" + selected + "]");
         _currentState = ACTIVE_STATE;
         this.styleName = "voiceConfActiveButtonStyle";
-        this.toolTip = ResourceUtil.getInstance().getString('bbb.toolbar.phone.toolTip.stop');	        
+        this.toolTip = ResourceUtil.getInstance().getString('bbb.toolbar.phone.toolTip.stop');	 
+        accessibilityName="{ResourceUtil.getInstance().getString('bbb.toolbar.phone.toolTip.stop.accessibilityName')}"       
       }
       
       private function onUserLeftConference():void {
