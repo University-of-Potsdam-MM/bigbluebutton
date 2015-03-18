@@ -93,6 +93,7 @@
 	  				if (rolledOver && data.raiseHand) {
 						roleBtn.setStyle("icon", images.hand_new);
 						roleBtn.toolTip = ResourceUtil.getInstance().getString('bbb.users.usersGrid.statusItemRenderer.lowerHand') + " - " + data.raiseHandTime.hours + ":" + data.raiseHandTime.minutes + ":" + data.raiseHandTime.seconds;
+						roleBtn.accessibilityName = ResourceUtil.getInstance().getString("bbb.users.usersGrid.statusItemRenderer.lowerHand.accessibilityName");
 						roleImg.visible = false;
 						roleBtn.visible = true;
 						roleBtn.enabled = true;

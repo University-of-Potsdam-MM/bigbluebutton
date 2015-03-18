@@ -302,6 +302,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			private function showSettingsButton(e:SettingsEvent):void{
 				var b:Button = new Button();
 				b.label = ResourceUtil.getInstance().getString('bbb.mainToolbar.settingsBtn');
+				b.accessibilityName = ResourceUtil.getInstance().getString("bbb.mainToolbar.settingsBtn.accessibilityName");
 				b.toolTip = ResourceUtil.getInstance().getString('bbb.mainToolbar.settingsBtn.toolTip');
 				b.addEventListener(MouseEvent.CLICK, openSettings);
 				this.addChild(b);

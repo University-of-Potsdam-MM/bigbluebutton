@@ -514,7 +514,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				if ((slideView != null) && (!slideView.visible)) this.title = ResourceUtil.getInstance().getString('bbb.presentation.title');
 				
 				if (titleBarOverlay != null) {
-					titleBarOverlay.accessibilityName = ResourceUtil.getInstance().getString('bbb.presentation.titleBar');
+					titleBarOverlay.accessibilityName = ResourceUtil.getInstance().getString('bbb.presentation.titleBar.accessibilityName');
 				}
 				
 				if (windowControls != null) {
@@ -620,16 +620,19 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	<mx:ControlBar id="presCtrlBar" name="presCtrlBar" width="100%" height="{CONTROL_BAR_HEIGHT}" styleName="presentationWindowControlsStyle" >
 		<mx:Button id="uploadPres" visible="false" height="30" styleName="presentationUploadButtonStyle"
     		toolTip="{ResourceUtil.getInstance().getString('bbb.presentation.uploadPresBtn.toolTip')}" 
+    		accessibilityName="{ResourceUtil.getInstance().getString('bbb.presentation.uploadPresBtn.toolTip.accessibilityName')}"
     	   	click="onUploadButtonClicked()" tabIndex="{baseIndex+5}"/>        	  
     	<mx:Spacer width="100%" id="spacer1"/>
     	<mx:Button id="backButton" visible="false" width="45" height="30" styleName="presentationBackButtonStyle"
     		toolTip="{ResourceUtil.getInstance().getString('bbb.presentation.backBtn.toolTip')}" click="gotoPreviousSlide()"
+    		accessibilityName="{ResourceUtil.getInstance().getString('bbb.presentation.backBtn.toolTip.accessibilityName')}"
     		tabIndex="{baseIndex+6}"/>
     	<mx:Button id="btnSlideNum" visible="false" label="" click="showThumbnails()"
 			toolTip="{ResourceUtil.getInstance().getString('bbb.presentation.btnSlideNum.toolTip')}"
 			tabIndex="{baseIndex+7}"/>
     	<mx:Button id="forwardButton" visible="false" width="45" height="30" styleName="presentationForwardButtonStyle"
     		toolTip="{ResourceUtil.getInstance().getString('bbb.presentation.forwardBtn.toolTip')}" click="gotoNextSlide()"
+    		accessibilityName="{ResourceUtil.getInstance().getString('bbb.presentation.forwardBtn.toolTip.accessibilityName')}"
     		tabIndex="{baseIndex+8}"/>    				
 		<mx:Spacer width="50%" id="spacer3"/>
 		<mx:HSlider id="zoomSlider" visible="false" value="{slideView.zoomPercentage}" styleName="presentationZoomSliderStyle"
@@ -639,10 +642,12 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
     		tabIndex="{baseIndex+9}" accessibilityName="{ResourceUtil.getInstance().getString('bbb.presentation.slider')}"/>
     	<mx:Button id="btnFitToWidth" visible="false" width="30" height="30" styleName="presentationFitToWidthButtonStyle"
 			toolTip="{ResourceUtil.getInstance().getString('bbb.presentation.fitToWidth.toolTip')}" 
+			accessibilityName="{ResourceUtil.getInstance().getString('bbb.presentation.fitToWidth.toolTip.accessibilityName')}"
 			click="onFitToPage(false)"
 			tabIndex="{baseIndex+10}"/>
 		<mx:Button id="btnFitToPage" visible="false" width="30" height="30" styleName="presentationFitToPageButtonStyle"
 			toolTip="{ResourceUtil.getInstance().getString('bbb.presentation.fitToPage.toolTip')}" 
+			accessibilityName="{ResourceUtil.getInstance().getString('bbb.presentation.fitToPage.toolTip.accessibilityName')}"
 			click="onFitToPage(true)"
 			tabIndex="{baseIndex+11}"/>
     <!-- This spacer is to prevent the whiteboard toolbar from overlapping the fit-ot-page button -->
