@@ -67,7 +67,6 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.main.model.users.events.ConnectionFailedEvent;
 			
 			import org.bigbluebutton.main.views.AdjustmentsWindow;
-						
 			import org.bigbluebutton.util.i18n.ResourceUtil;
 	  		
 
@@ -81,7 +80,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			[Bindable] public var toolbarOptions:LayoutOptions = new LayoutOptions();		
 			[Bindable] private var baseIndex:int;
 			[Bindable] private var numButtons:int;
-      			
+
 			/*
 			 * Because of the de-centralized way buttons are added to the toolbar, there is a large gap between the tab indexes of the main buttons
 			 * on the left and the tab indexes of the "other" items on the right (shortcut glossary, language slector, etc). This will make it more

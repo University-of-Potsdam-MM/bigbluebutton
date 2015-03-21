@@ -41,6 +41,7 @@ package org.bigbluebutton.main.events {
 		public static const GOFIRST_MESSAGE:String = 'GOFIRST_MESSAGE';
 		public static const GOREAD_MESSAGE:String = 'GOREAD_MESSAGE';
 		public static const OPEN_SHORTCUT_WIN:String = 'OPEN_SHORTCUT_WIN';
+		public static const OPEN_ADJUSTMENTS_WIN:String = 'OPEN_ADJUSTMENTS_WIN';
 		
 		public static const FOCUS_USERS_WINDOW:String = 'FOCUS_USERS_WINDOW';
 		public static const FOCUS_VIDEO_WINDOW:String = 'FOCUS_VIDEO_WINDOW';
@@ -100,6 +101,16 @@ package org.bigbluebutton.main.events {
 		public static const SC_REPOST_POLL:String = 'SC_REPOST_POLL';
 		public static const SC_STOP_POLL:String = 'SC_STOP_POLL';
 		
+		// Activitylog ShortcutEvents
+		public static const MAXIMIZE_ACTIVITYLOG:String = 'MAXIMIZE_ACTIVITYLOG';
+		public static const MINIMIZE_ACTIVITYLOG:String = 'MINIMIZE_ACTIVITYLOG';
+		public static const FOCUS_ACTIVITYLOG_INPUT:String = 'FOCUS_ACTIVITYLOG_INPUT';
+		public static const FOCUS_ACTIVITYLOG_WINDOW:String = 'FOCUS_ACTIVITYLOG_WINDOW';
+		public static const FOCUS_ACTIVITYLOG_TABS:String = 'FOCUS_ACTIVITYLOG_TABS';
+		public static const FOCUS_ACTIVITYLOG_BOX:String = 'FOCUS_ACTIVITYLOG_BOX';
+		public static const ACTIVITYLOG_DEBUG:String = 'ACTIVITYLOG_DEBUG';
+
+
 		// Temporary string to help fix chat message navigation for screen readers
 		public static const CHAT_DEBUG:String = 'CHAT_DEBUG';
 		

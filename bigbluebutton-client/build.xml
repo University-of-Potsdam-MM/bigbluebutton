@@ -22,6 +22,8 @@
 	<property name="BBB_MAIN" value="BigBlueButton" />
 	<property name="BROADCAST" value="BroadcastModule" />
 	<property name="CHAT" value="ChatModule" />
+	<property name="ACTIVITYLOG" value="ActivitylogModule" />
+	<property name="EXAMPLE_CHAT" value="ExampleChatModule" />
 	<property name="PRESENT" value="PresentModule" />
 	<property name="DESKSHARE" value="DeskShareModule" />
 	<property name="DESKSHARE_SA" value="DeskshareStandalone" />
@@ -132,8 +134,22 @@
 							</exec>	
 			  			</else>
 					</if>	
-					<echo message="Compiling locale ${locale.name}"/>
-					<compileLocale locale="${locale.name}" />  
+
+					<!-- //Hier die beiden IFs gebaut, damit nicht alle Locales immer kompiliert werden, nur DE und EN.-->
+					<if>
+                			<equals arg1="${locale.name}" arg2="en_US"/>
+					<then>
+						<echo message="Compiling locale ${locale.name}"/>
+						<compileLocale locale="${locale.name}" />
+					</then>
+					</if>
+					<if>
+                			<equals arg1="${locale.name}" arg2="de_DE"/>
+					<then>
+						<echo message="Compiling locale ${locale.name}"/>
+						<compileLocale locale="${locale.name}" />
+					</then>
+					</if>
            		</else> 
         	</if>       	   
        </sequential>
@@ -195,6 +211,14 @@
   	
 	<target name="build-chat" description="Compile Chat Module">
 		<build-module src="${SRC_DIR}" target="${CHAT}" />
+	</target>
+
+	<target name="build-activitylog" description="Compile Activitylog Module">
+		<build-module src="${SRC_DIR}" target="${ACTIVITYLOG}" />
+	</target>
+
+	<target name="build-example-chat" description="Compile Example Chat Module">
+	        <build-module src="${SRC_DIR}" target="${EXAMPLE_CHAT}" />
 	</target>
   
   <target name="build-notes" description="Compile Notes Module">
@@ -282,8 +306,8 @@
 	
 	<!-- just a grouping of modules to compile -->
 	<target name="build-main-chat-present" 
-			depends="build-bbb-main, build-chat, build-present, build-layout, build-broadcast, build-users"
-			description="Compile main, chat, present modules">
+			depends="build-bbb-main, build-chat, build-activitylog, build-custom-chat, build-present, build-layout, build-broadcast, build-users"
+			description="Compile main, chat, activitylog, build-custom-chat, present modules">
 	</target>
 	
 	<!-- just a grouping of modules to compile -->
@@ -525,4 +549,5 @@
 	<target name="cleanandmake" depends="clean-build-all" description="Build BBB client including locales"/>
 
 	<target name="build-poll" depends="init-ant-contrib, build-polling" description="Build only the polling module." />
+	<target name="build-custom-chat" depends="init-ant-contrib, build-example-chat" description="Build the ExampleChatModule only to reduce build time" />
 </project>

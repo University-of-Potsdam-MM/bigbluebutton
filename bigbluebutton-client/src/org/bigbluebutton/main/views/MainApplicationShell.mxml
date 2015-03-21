@@ -661,3 +661,4 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 		<mx:HBox id="addedBtns" />
 	</mx:ControlBar>
 </mx:VBox>
+
