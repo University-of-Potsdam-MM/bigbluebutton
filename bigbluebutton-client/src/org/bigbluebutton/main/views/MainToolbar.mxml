@@ -20,10 +20,10 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 -->
 
-<mx:ApplicationControlBar xmlns:mx="http://www.adobe.com/2006/mxml" 
+<mx:ApplicationControlBar xmlns:mx="http://www.adobe.com/2006/mxml"
 	xmlns:mate="http://mate.asfusion.com/" visible="{showToolbar}"
 	enabled="true" xmlns:views="org.bigbluebutton.main.views.*"
-	initialize="init()" creationComplete="onCreationComplete()" >   
+	initialize="init()" creationComplete="onCreationComplete()">   
 	
 	<mate:Listener type="{ToolbarButtonEvent.ADD}" method="handleAddToolbarButtonEvent" />	
 	<mate:Listener type="{ToolbarButtonEvent.REMOVE}" method="handleRemoveToolbarButtonEvent"/>
@@ -41,28 +41,35 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   
 	<mx:Script>
 		<![CDATA[
-      import com.asfusion.mate.events.Dispatcher;     
-      import mx.accessibility.AlertAccImpl;
-      import mx.controls.Alert;
-      import mx.core.UIComponent;
-      import mx.events.CloseEvent;     
-      import org.bigbluebutton.common.IBbbToolbarComponent;
-      import org.bigbluebutton.common.LogUtil;
-      import org.bigbluebutton.common.events.CloseWindowEvent;
-      import org.bigbluebutton.common.events.OpenWindowEvent;
-      import org.bigbluebutton.common.events.ToolbarButtonEvent;
-      import org.bigbluebutton.core.BBB;
-      import org.bigbluebutton.core.managers.UserManager;
-      import org.bigbluebutton.core.services.BandwidthMonitor;
-      import org.bigbluebutton.main.events.BBBEvent;
-      import org.bigbluebutton.main.events.ConfigEvent;
-      import org.bigbluebutton.main.events.LogoutEvent;
-      import org.bigbluebutton.main.events.SettingsEvent;
-      import org.bigbluebutton.main.events.ShortcutEvent;
-      import org.bigbluebutton.main.model.LayoutOptions;
-      import org.bigbluebutton.main.model.users.events.ConferenceCreatedEvent;
-      import org.bigbluebutton.main.model.users.events.ConnectionFailedEvent;
-      import org.bigbluebutton.util.i18n.ResourceUtil;
+			import com.asfusion.mate.events.Dispatcher;
+			import mx.accessibility.AlertAccImpl;
+			import mx.controls.Alert;
+			import mx.core.UIComponent;
+			import mx.events.CloseEvent;
+			
+			import mx.managers.PopUpManager;
+			
+			import org.bigbluebutton.common.IBbbToolbarComponent;
+			import org.bigbluebutton.common.LogUtil;
+			import org.bigbluebutton.common.events.CloseWindowEvent;
+			import org.bigbluebutton.common.events.OpenWindowEvent;
+			import org.bigbluebutton.common.events.ToolbarButtonEvent;
+			import org.bigbluebutton.core.BBB;
+			import org.bigbluebutton.core.managers.UserManager;
+			import org.bigbluebutton.core.services.BandwidthMonitor;
+			import org.bigbluebutton.main.events.BBBEvent;
+			import org.bigbluebutton.main.events.ConfigEvent;
+			import org.bigbluebutton.main.events.LogoutEvent;
+			import org.bigbluebutton.main.events.SettingsEvent;
+			import org.bigbluebutton.main.events.ShortcutEvent;
+			import org.bigbluebutton.main.model.LayoutOptions;
+			import org.bigbluebutton.main.model.users.events.ConferenceCreatedEvent;
+			import org.bigbluebutton.main.model.users.events.ConnectionFailedEvent;
+			
+			import org.bigbluebutton.main.views.AdjustmentsWindow;
+						
+			import org.bigbluebutton.util.i18n.ResourceUtil;
+	  		
 
 			private var DEFAULT_HELP_URL:String = "http://www.bigbluebutton.org/content/videos";
 			
@@ -74,14 +81,14 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			[Bindable] public var toolbarOptions:LayoutOptions = new LayoutOptions();		
 			[Bindable] private var baseIndex:int;
 			[Bindable] private var numButtons:int;
-      
+      			
 			/*
 			 * Because of the de-centralized way buttons are added to the toolbar, there is a large gap between the tab indexes of the main buttons
 			 * on the left and the tab indexes of the "other" items on the right (shortcut glossary, language slector, etc). This will make it more
 			 * convenient to add future items to the tab order.
 			 * 
 			 * - Justin Robinson, November 13 2012 
-			 */
+			 */			
 			
 			private var xml:XML;
 			
@@ -112,6 +119,11 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         }
       }
       
+			private function onAdjustmentsClick(evt:Event = null):void {
+				var d:Dispatcher = new Dispatcher();
+				d.dispatchEvent(new ShortcutEvent(BBBEvent.OPEN_ADJUSTMENTS_WIN));
+			}		
+			
       private function checkAccessiblity(e:TimerEvent):void {
         // remove the quick links if there's no screen reader active
         if (!Accessibility.active) {
@@ -333,7 +345,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
           } 
         }
       }
-
+			
 		]]>
 	</mx:Script>
     
@@ -362,6 +374,10 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 <!--
   <mx:Button label="DISCONNECT!" click="BBB.initConnectionManager().forceClose()" height="22" toolTip="Click to simulate disconnection" />
 -->
+	<mx:Button id="btnAdjustments" label="Adjustments" click="onAdjustmentsClick()" height="22"
+			   toolTip="Open Adjustments for Audio, Layout and Shortcuts"
+			   tabIndex="{baseIndex+numButtons+12}"/>
+	
 	<mx:Button id="shortcutKeysBtn" label="{ResourceUtil.getInstance().getString('bbb.mainToolbar.shortcutBtn')}" styleName="shortcutButtonStyle"
              click="onShortcutButtonClick()" height="22" 
              toolTip="{ResourceUtil.getInstance().getString('bbb.mainToolbar.shortcutBtn.toolTip')}" 
