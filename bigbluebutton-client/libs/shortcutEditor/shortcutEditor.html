@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Big Blue Button Shortcutmapper</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="style.css">
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+        <script src="mapping.js" ></script>
+    </head>
+    <body>
+        <img src="http://demo.bigbluebutton.org/images/bbb-logo.png" alt="BigBlueButton Logo"/>
+        <h1>Shortcut-Editor</h1>
+
+        <button type="button" id="loadCurrentConfig">Lade aktuelle Einstellungen</button>
+   
+        <div class="container" id="createConfig">
+            <div class="header">
+                <h2>Hier können Sie ihre Konfiguration erstellen</h2>
+                <button type="button" id="addMappingLine">Mappingzeile hinzufügen</button><br/>
+            </div>
+            <form id="mappingLines">
+                <span class="mappingHeader">Original</span> = <span class="mappingHeader">Neu</span><br/>
+            </form>
+        </div>
+
+        <div class="container" id="showConfig">
+            <div class="header">
+                <h2>Hier wird Ihre Konfiguration angezeigt</h2>
+                <button type="button" id="generateJSONOutputAndSave">Konfiguration anzeigen und speichern</button>
+            </div>
+            <p id="JSONOutput"></p>
+        </div>
+    </body>
+</html>
