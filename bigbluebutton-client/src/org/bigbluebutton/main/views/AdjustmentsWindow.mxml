@@ -8,15 +8,17 @@
 			
 	<mate:Listener type="{BBBEvent.LOGIN_EVENT}" method="handleLoginEvent"/>
 	
-	<mate:Listener type="{LayoutChangedEvent.LAYOUT_CHANGED}" method="handleLayoutChanged"/>
-	<mate:Listener type="{MadePresenterEvent.PRESENTER_NAME_CHANGE}" method="handlePresenterNameChange"/>
-	<mate:Listener type="{MadePresenterEvent.SWITCH_TO_PRESENTER_MODE}" method="handleSwitchToPresenterMode"/>
-	<mate:Listener type="{MadePresenterEvent.SWITCH_TO_VIEWER_MODE}" method="handleSwitchToViewerMode"/>
-	<mate:Listener type="{MeetingMutedEvent.MEETING_MUTED}" method="handleMeetingMuted"/>
+	<mate:Listener type="{AppletStartedEvent.APPLET_STARTED}" method="handleStartSharingDesktopEvent"/>
+	<mate:Listener type="{DisplaySlideEvent.DISPLAY_SLIDE_EVENT}" method="handleDisplaySlideEvent"/>
+	<mate:Listener type="{MadePresenterEvent.SWITCH_TO_PRESENTER_MODE}" method="handleSwitchToPresenterModeEvent"/>
+	<mate:Listener type="{MadePresenterEvent.SWITCH_TO_VIEWER_MODE}" method="handleSwitchToViewerModeEvent"/>
 	<mate:Listener type="{PrivateChatMessageEvent.PRIVATE_CHAT_MESSAGE_EVENT}" method="handlePrivateChatMessageEvent"/>
 	<mate:Listener type="{PublicChatMessageEvent.PUBLIC_CHAT_MESSAGE_EVENT}" method="handlePublicChatMessageEvent"/>
-	<mate:Listener type="{ShareEvent.START_SHARING}" method="handleStartSharing"/>
-	<mate:Listener type="{ShareEvent.STOP_SHARING}" method="handleStopSharing"/>
+	<mate:Listener type="{ShareWindowEvent.CLOSE}" method="handleStopSharingDesktopEvent"/>
+	<mate:Listener type="{StartBroadcastEvent.START_BROADCAST}" method="handleStartBroadcastEvent"/>
+	<mate:Listener type="{StopBroadcastEvent.STOP_BROADCASTING}" method="handleStopBroadcastEvent"/>
+	<mate:Listener type="{SwitchedLayoutEvent.SWITCHED_LAYOUT_EVENT}" method="handleSwitchedLayoutEvent"/>
+	<mate:Listener type="{UserJoinedEvent.JOINED}" method="handleUserJoinedEvent"/>
 	<mate:Listener type="{UserLeftEvent.LEFT}" method="handleUserLeftEvent"/>
 	
 	<mate:Listener type="{LayoutsReadyEvent.LAYOUTS_READY}" method="populateLayoutsList"/>
@@ -39,42 +41,49 @@
 			import org.bigbluebutton.core.vo.LockSettingsVO;
 			import org.bigbluebutton.main.events.BBBEvent;
 			import org.bigbluebutton.main.events.MadePresenterEvent;
+			import org.bigbluebutton.main.events.UserJoinedEvent;
 			import org.bigbluebutton.main.events.UserLeftEvent;
 			import org.bigbluebutton.modules.chat.events.PrivateChatMessageEvent;
 			import org.bigbluebutton.modules.chat.events.PublicChatMessageEvent;
-			import org.bigbluebutton.modules.deskshare.events.ShareEvent;
+			import org.bigbluebutton.modules.deskshare.events.AppletStartedEvent;
+			import org.bigbluebutton.modules.deskshare.events.ShareWindowEvent;
 			import org.bigbluebutton.modules.layout.events.ChangeLayoutEvent;
-			import org.bigbluebutton.modules.layout.events.LayoutChangedEvent;
 			import org.bigbluebutton.modules.layout.events.LayoutsReadyEvent;
 			import org.bigbluebutton.modules.layout.model.LayoutModel;
-			import org.bigbluebutton.modules.users.events.MeetingMutedEvent;
+			import org.bigbluebutton.modules.present.events.DisplaySlideEvent;
+			import org.bigbluebutton.modules.videoconf.events.StartBroadcastEvent;
+			import org.bigbluebutton.modules.videoconf.events.StopBroadcastEvent;
 			import org.bigbluebutton.util.i18n.ResourceUtil;
 			
 			private var cookie:SharedObject;
 			private var dispatcher:Dispatcher = new Dispatcher();
 			private var layoutItem:String;
 			private var layoutName:String;
-			private var soundItems:Array;	
-			private var soundLayoutChanged:Boolean;
-			private var soundLayoutChangedLabel:String;
-			private var soundMeetingMuted:Boolean;
-			private var soundMeetingMutedLabel:String;
-			private var soundParticipantLeft:Boolean;
-			private var soundParticipantLeftLabel:String;
-			private var soundPresenterNameChange:Boolean;
-			private var soundPresenterNameChangeLabel:String;
+			private var soundDisplaySlide:Boolean;
+			private var soundDisplaySlideLabel:String;
+			private var soundItems:Array;
 			private var soundPrivateChatMessage:Boolean;
 			private var soundPrivateChatMessageLabel:String;
 			private var soundPublicChatMessage:Boolean;
 			private var soundPublicChatMessageLabel:String;
-			private var soundStartSharing:Boolean;
-			private var soundStartSharingLabel:String;
-			private var soundStopSharing:Boolean;
-			private var soundStopSharingLabel:String;
+			private var soundStartBroadcast:Boolean;
+			private var soundStartBroadcastLabel:String;
+			private var soundStartSharingDesktop:Boolean;
+			private var soundStartSharingDesktopLabel:String;
+			private var soundStopBroadcast:Boolean;
+			private var soundStopBroadcastLabel:String;
+			private var soundStopSharingDesktop:Boolean;
+			private var soundStopSharingDesktopLabel:String;
+			private var soundSwitchedLayout:Boolean;
+			private var soundSwitchedLayoutLabel:String;
 			private var soundSwitchToPresenterMode:Boolean;
 			private var soundSwitchToPresenterModeLabel:String;
 			private var soundSwitchToViewerMode:Boolean;
 			private var soundSwitchToViewerModeLabel:String;
+			private var soundUserJoined:Boolean;
+			private var soundUserJoinedLabel:String;
+			private var soundUserLeft:Boolean;
+			private var soundUserLeftLabel:String;
 			private var timerAdjustmentsWindow:Timer;
 			private var timerLayout:Timer;
 			
@@ -90,82 +99,140 @@
 			private var publicSoundClass:Class;
 			private var publicSound:Sound = new publicSoundClass() as Sound;
 			
+			/* source:	Christian Klein; University of Potsdam (self recorded)
+			 * licence:	Attribution 3.0
+			 */
 			[Embed(source='/org/bigbluebutton/sounds/ba.mp3')] 
 			private var baClass:Class;
 			private var ba:Sound = new baClass() as Sound;
 			
+			/* source:	AngryFlash; http://soundbible.com/2047-Banana-Slap.html
+			 * licence:	Public Domain
+			 */
 			[Embed(source='/org/bigbluebutton/sounds/bananaSlap.mp3')] 
 			private var bananaSlapClass:Class;
 			private var bananaSlap:Sound = new bananaSlapClass() as Sound;
 			
+			/* source:	Christian Klein; University of Potsdam (self recorded)
+			 * licence:	Attribution 3.0
+			 */
 			[Embed(source='/org/bigbluebutton/sounds/bo.mp3')] 
 			private var boClass:Class;
 			private var bo:Sound = new boClass() as Sound;
 			
+			/* source:	Christian Klein; University of Potsdam (self recorded)
+			 * licence:	Attribution 3.0
+			 */
 			[Embed(source='/org/bigbluebutton/sounds/bottle.mp3')] 
 			private var bottleClass:Class;
 			private var bottle:Sound = new bottleClass() as Sound;
 			
+			/* source:	Christian Klein; University of Potsdam (self recorded)
+			 * licence:	Attribution 3.0
+			 */
+			[Embed(source='/org/bigbluebutton/sounds/carnivalHorn.mp3')] 
+			private var carnivalHornClass:Class;
+			private var carnivalHorn:Sound = new carnivalHornClass() as Sound;
+			
+			/* source:	Muska666; http://soundbible.com/1997-Cha-Ching-Register.html
+			 * licence:	Attribution 3.0
+			 */
 			[Embed(source='/org/bigbluebutton/sounds/chaChingRegister.mp3')] 
 			private var chaChingRegisterClass:Class;
 			private var chaChingRegister:Sound = new chaChingRegisterClass() as Sound;
 			
+			/* source:	Go445; http://soundbible.com/2084-Glass-Ping.html
+			 * licence:	Attr-Noncommercial 3.0
+			 */
 			[Embed(source='/org/bigbluebutton/sounds/glassPing.mp3')] 
 			private var glassPingClass:Class;
 			private var glassPing:Sound = new glassPingClass() as Sound;
-						
+			
+			/* source:	Maximilien; http://soundbible.com/2046-Incoming-Suspense.html
+			 * licence:	Attribution 3.0
+			 */		
 			[Embed(source='/org/bigbluebutton/sounds/incomingSuspense.mp3')] 
 			private var incomingSuspenseClass:Class;
 			private var incomingSuspense:Sound = new incomingSuspenseClass() as Sound;
 			
-			[Embed(source='/org/bigbluebutton/sounds/mp5.mp3')] 
-			private var mp5Class:Class;
-			private var mp5:Sound = new mp5Class() as Sound;
+			/* source:	GunGuru; http://soundbible.com/2091-MP5-SMG-9mm.html
+			 * licence:	Attribution 3.0
+			 */
+			[Embed(source='/org/bigbluebutton/sounds/machinePistol.mp3')] 
+			private var machinePistolClass:Class;
+			private var machinePistol:Sound = new machinePistolClass() as Sound;
 			
+			/* source:	Brian Rocca; http://soundbible.com/1992-Pin-Dropping.html
+			 * licence:	Attribution 3.0
+			 */
 			[Embed(source='/org/bigbluebutton/sounds/pinDropping.mp3')] 
 			private var pinDroppingClass:Class;
 			private var pinDropping:Sound = new pinDroppingClass() as Sound;
 			
+			/* source:	Christian Klein; University of Potsdam (self recorded)
+			 * licence:	Attribution 3.0
+			 */
 			[Embed(source='/org/bigbluebutton/sounds/ping.mp3')] 
 			private var pingClass:Class;
 			private var ping:Sound = new pingClass() as Sound;
 			
+			/* source:	Mark DiAngelo; http://soundbible.com/2069-Realistic-Punch.html
+			 * licence:	Attribution 3.0
+			 */
 			[Embed(source='/org/bigbluebutton/sounds/punch.mp3')] 
 			private var punchClass:Class;
 			private var punch:Sound = new punchClass() as Sound;
 			
-			[Embed(source='/org/bigbluebutton/sounds/rpg.mp3')] 
-			private var rpgClass:Class;
-			private var rpg:Sound = new rpgClass() as Sound;
+			/* source:	Mike Koenig; http://soundbible.com/2075-RPG-Plus-Shrapnel.html (edits)
+			 * licence:	Attribution 3.0
+			 */
+			[Embed(source='/org/bigbluebutton/sounds/rocketPropelledGrenade.mp3')] 
+			private var rocketPropelledGrenadeClass:Class;
+			private var rocketPropelledGrenade:Sound = new rocketPropelledGrenadeClass() as Sound;
 			
+			/* source:	Marcel; http://soundbible.com/2072-Shell-Falling.html
+			 * licence:	Attribution 3.0
+			 */
 			[Embed(source='/org/bigbluebutton/sounds/shellsFalls.mp3')] 
 			private var shellsFallsClass:Class;
 			private var shellsFalls:Sound = new shellsFallsClass() as Sound;
 			
+			/* source:	Soundeffects; http://soundbible.com/2021-Atchisson-Assault-Shotgun.html (edits)
+			 * licence:	Attribution 3.0
+			 */
 			[Embed(source='/org/bigbluebutton/sounds/shotgun.mp3')] 
 			private var shotgunClass:Class;
 			private var shotgun:Sound = new shotgunClass() as Sound;
 			
+			/* source:	RA The Sun God; http://soundbible.com/1996-Shotgun-Reload-Old.html
+			 * licence:	Attribution 3.0
+			 */
 			[Embed(source='/org/bigbluebutton/sounds/shotgunReload.mp3')] 
 			private var shotgunReloadClass:Class;
 			private var shotgunReload:Sound = new shotgunReloadClass() as Sound;
 			
+			/* source:	DeepFrozenApps; http://soundbible.com/2044-Tick.html
+			 * licence:	Attribution 3.0
+			 */
 			[Embed(source='/org/bigbluebutton/sounds/tick.mp3')] 
 			private var tickClass:Class;
 			private var tick:Sound = new tickClass() as Sound;
 			
+			/* source:	Grant Evans; http://soundbible.com/2071-Winchester-1873-Single-Shots.html (edits)
+			 * licence:	Attribution 3.0
+			 */
 			[Embed(source='/org/bigbluebutton/sounds/winchester.mp3')] 
 			private var winchesterClass:Class;
 			private var winchester:Sound = new winchesterClass() as Sound;
 			
+			/* source:	Mark DiAngelo; http://soundbible.com/2068-Woosh.html
+			 * licence:	Attribution 3.0
+			 */
 			[Embed(source='/org/bigbluebutton/sounds/woosh.mp3')] 
 			private var wooshClass:Class;
 			private var woosh:Sound = new wooshClass() as Sound;
-			
-			[Embed(source='/org/bigbluebutton/sounds/www.mp3')] 
-			private var wwwClass:Class;
-			private var www:Sound = new wwwClass() as Sound;
-			
+						
+			/* Function for playing audio files */
 			private function playSound(sound:String):void { 
 				switch(sound) {
 					case "notice":
@@ -189,6 +256,9 @@
 					case "bottle":
 						bottle.play();
 						break;
+					case "carnivalHorn":
+						carnivalHorn.play();
+						break;
 					case "chaChingRegister":
 						chaChingRegister.play();
 						break;
@@ -198,8 +268,8 @@
 					case "incomingSuspense":
 						incomingSuspense.play();
 						break;
-					case "mp5":
-						mp5.play();
+					case "machinePistol":
+						machinePistol.play();
 						break;
 					case "pinDropping":
 						pinDropping.play();
@@ -210,8 +280,8 @@
 					case "punch":
 						punch.play();
 						break;
-					case "rpg":
-						rpg.play();
+					case "rocketPropelledGrenade":
+						rocketPropelledGrenade.play();
 						break;
 					case "shellsFalls":
 						shellsFalls.play();
@@ -231,35 +301,34 @@
 					case "woosh":
 						woosh.play();
 						break;
-					case "www":
-						www.play();
-						break;
 				}
 			}
-						
+			
+			/* Initializes view */
 			private function onCreationComplete():void {				
-				soundItems = new Array("notice",
-									   "privateSound",
-									   "publicSound",
-									   "ba",
-									   "bananaSlap",
-									   "bo",
-									   "bottle",
-									   "chaChingRegister",
-									   "glassPing",
-									   "incomingSuspense",
-									   "mp5",
-									   "pinDropping",
-									   "ping",
-									   "punch",
-									   "rpg",
-									   "shellsFalls",
-									   "shotgun",
-									   "shotgunReload",
-									   "tick",
-									   "winchester",
-									   "woosh",
-									   "www");
+				soundItems = new Array(
+					"notice",
+					"privateSound",
+					"publicSound",
+					"ba",
+					"bananaSlap",
+					"bo",
+					"bottle",
+					"carnivalHorn",
+					"chaChingRegister",
+					"glassPing",
+					"incomingSuspense",
+					"machinePistol",
+					"pinDropping",
+					"ping",
+					"punch",
+					"rocketPropelledGrenade",
+					"shellsFalls",
+					"shotgun",
+					"shotgunReload",
+					"tick",
+					"winchester",
+					"woosh");
 				
 				windowControls.minimizeBtn.visible = false;
 				windowControls.minimizeBtn.includeInLayout = false;
@@ -272,56 +341,64 @@
 					layoutSave.text = layoutName;
 				}
 				else {
-					layoutSave.text = "No layout selected";
+					layoutSave.text = "Default Layout";
 				}
 			}
 			
+			/* Initializes variables for Audio */
 			private function initializeAudio():void {
-				soundPublicChatMessageView.selected = soundPublicChatMessage;
+				soundDisplaySlideView.selected = soundDisplaySlide;
 				soundPrivateChatMessageView.selected = soundPrivateChatMessage;
-				soundParticipantLeftView.selected = soundParticipantLeft;
-				soundPresenterNameChangeView.selected = soundPresenterNameChange;
-				soundSwitchToViewerModeView.selected = soundSwitchToViewerMode;
+				soundPublicChatMessageView.selected = soundPublicChatMessage;
+				soundStartBroadcastView.selected = soundStartBroadcast;
+				soundStartSharingDesktopView.selected = soundStartSharingDesktop;
+				soundStopBroadcastView.selected = soundStopBroadcast;
+				soundStopSharingDesktopView.selected = soundStopSharingDesktop;
+				soundSwitchedLayoutView.selected = soundSwitchedLayout;
 				soundSwitchToPresenterModeView.selected = soundSwitchToPresenterMode;
-				soundStartSharingView.selected = soundStartSharing;
-				soundStopSharingView.selected = soundStopSharing;
-				soundLayoutChangedView.selected = soundLayoutChanged;
-				soundMeetingMutedView.selected = soundMeetingMuted;
-				soundItems.sort(); 
-				soundPublicChatMessageComboBox.dataProvider = soundItems;
+				soundSwitchToViewerModeView.selected = soundSwitchToViewerMode;
+				soundUserJoinedView.selected = soundUserJoined;
+				soundUserLeftView.selected = soundUserLeft;
+				soundItems.sort();
+				soundDisplaySlideComboBox.dataProvider = soundItems;
 				soundPrivateChatMessageComboBox.dataProvider = soundItems;
-				soundParticipantLeftComboBox.dataProvider = soundItems;
-				soundPresenterNameChangeComboBox.dataProvider = soundItems;
-				soundSwitchToViewerModeComboBox.dataProvider = soundItems;
+				soundPublicChatMessageComboBox.dataProvider = soundItems;
+				soundStartBroadcastComboBox.dataProvider = soundItems;
+				soundStartSharingDesktopComboBox.dataProvider = soundItems;
+				soundStopBroadcastComboBox.dataProvider = soundItems;
+				soundStopSharingDesktopComboBox.dataProvider = soundItems;
+				soundSwitchedLayoutComboBox.dataProvider = soundItems;
 				soundSwitchToPresenterModeComboBox.dataProvider = soundItems;
-				soundStartSharingComboBox.dataProvider = soundItems;
-				soundStopSharingComboBox.dataProvider = soundItems;
-				soundLayoutChangedComboBox.dataProvider = soundItems;
-				soundMeetingMutedComboBox.dataProvider = soundItems;
-								
+				soundSwitchToViewerModeComboBox.dataProvider = soundItems;
+				soundUserJoinedComboBox.dataProvider = soundItems;
+				soundUserLeftComboBox.dataProvider = soundItems;
+												
 				if (cookie.data.soundPublicChatMessageLabel != null) {
-					soundPublicChatMessageComboBox.selectedItem = soundPublicChatMessageLabel;
+					soundDisplaySlideComboBox.selectedItem = soundDisplaySlideLabel;
 					soundPrivateChatMessageComboBox.selectedItem = soundPrivateChatMessageLabel;
-					soundParticipantLeftComboBox.selectedItem = soundParticipantLeftLabel;
-					soundPresenterNameChangeComboBox.selectedItem = soundPresenterNameChangeLabel;
-					soundSwitchToViewerModeComboBox.selectedItem = soundSwitchToViewerModeLabel;
+					soundPublicChatMessageComboBox.selectedItem = soundPublicChatMessageLabel;
+					soundStartBroadcastComboBox.selectedItem = soundStartBroadcastLabel;
+					soundStartSharingDesktopComboBox.selectedItem = soundStartSharingDesktopLabel;
+					soundStopBroadcastComboBox.selectedItem = soundStopBroadcastLabel;
+					soundStopSharingDesktopComboBox.selectedItem = soundStopSharingDesktopLabel;
+					soundSwitchedLayoutComboBox.selectedItem = soundSwitchedLayoutLabel;
 					soundSwitchToPresenterModeComboBox.selectedItem = soundSwitchToPresenterModeLabel;
-					soundStartSharingComboBox.selectedItem = soundStartSharingLabel;
-					soundStopSharingComboBox.selectedItem = soundStopSharingLabel;
-					soundLayoutChangedComboBox.selectedItem = soundLayoutChangedLabel;
-					soundMeetingMutedComboBox.selectedItem = soundMeetingMutedLabel;
-				}
-				else {
-					soundPublicChatMessageComboBox.selectedItem = "publicSound";
+					soundSwitchToViewerModeComboBox.selectedItem = soundSwitchToViewerModeLabel;
+					soundUserJoinedComboBox.selectedItem = soundUserJoinedLabel;
+					soundUserLeftComboBox.selectedItem = soundUserLeftLabel;
+				} else {
+					soundDisplaySlideComboBox.selectedItem = "notice";
 					soundPrivateChatMessageComboBox.selectedItem = "privateSound";
-					soundParticipantLeftComboBox.selectedItem = "notice";
-					soundPresenterNameChangeComboBox.selectedItem = "notice";
-					soundSwitchToViewerModeComboBox.selectedItem = "notice";
+					soundPublicChatMessageComboBox.selectedItem = "publicSound";
+					soundStartBroadcastComboBox.selectedItem = "notice";
+					soundStartSharingDesktopComboBox.selectedItem = "notice";
+					soundStopBroadcastComboBox.selectedItem = "notice";
+					soundStopSharingDesktopComboBox.selectedItem = "notice";
+					soundSwitchedLayoutComboBox.selectedItem = "notice";
 					soundSwitchToPresenterModeComboBox.selectedItem = "notice";
-					soundStartSharingComboBox.selectedItem = "notice";
-					soundStopSharingComboBox.selectedItem = "notice";
-					soundLayoutChangedComboBox.selectedItem = "notice";
-					soundMeetingMutedComboBox.selectedItem = "notice";
+					soundSwitchToViewerModeComboBox.selectedItem = "notice";
+					soundUserJoinedComboBox.selectedItem = "notice";
+					soundUserLeftComboBox.selectedItem = "notice";
 				}
 			}
 			
@@ -332,62 +409,71 @@
 			public function getDataFromCookie():void {
 				cookie = SharedObject.getLocal("data");
 				if (cookie.data.soundPublicChatMessage != null) {
-					soundPublicChatMessage = cookie.data.soundPublicChatMessage;
-					soundPublicChatMessageLabel = cookie.data.soundPublicChatMessageLabel;
-					soundPrivateChatMessage = cookie.data.soundPrivateChatMessage;
-					soundPrivateChatMessageLabel = cookie.data.soundPrivateChatMessageLabel;
-					soundParticipantLeft = cookie.data.soundParticipantLeft;
-					soundParticipantLeftLabel = cookie.data.soundParticipantLeftLabel;
-					soundPresenterNameChange = cookie.data.soundPresenterNameChange;
-					soundPresenterNameChangeLabel = cookie.data.soundPresenterNameChangeLabel;
-					soundSwitchToViewerMode = cookie.data.soundSwitchToViewerMode;
-					soundSwitchToViewerModeLabel = cookie.data.soundSwitchToViewerModeLabel;
-					soundSwitchToPresenterMode = cookie.data.soundSwitchToPresenterMode;
-					soundSwitchToPresenterModeLabel = cookie.data.soundSwitchToPresenterModeLabel;
-					soundStartSharing = cookie.data.soundStartSharing;
-					soundStartSharingLabel = cookie.data.soundStartSharingLabel;
-					soundStopSharing = cookie.data.soundStopSharing;
-					soundStopSharingLabel = cookie.data.soundStopSharingLabel;
-					soundLayoutChanged = cookie.data.soundLayoutChanged;
-					soundLayoutChangedLabel = cookie.data.soundLayoutChangedLabel;
-					soundMeetingMuted = cookie.data.soundMeetingMuted;
-					soundMeetingMutedLabel = cookie.data.soundMeetingMutedLabel;
 					layoutItem = cookie.data.layoutItem;
 					layoutName = cookie.data.layoutName;
+					soundDisplaySlide = cookie.data.soundDisplaySlide;
+					soundDisplaySlideLabel = cookie.data.soundDisplaySlideLabel;
+					soundPrivateChatMessage = cookie.data.soundPrivateChatMessage;
+					soundPrivateChatMessageLabel = cookie.data.soundPrivateChatMessageLabel;
+					soundPublicChatMessage = cookie.data.soundPublicChatMessage;
+					soundPublicChatMessageLabel = cookie.data.soundPublicChatMessageLabel;
+					soundStartBroadcast = cookie.data.soundStartBroadcast;
+					soundStartBroadcastLabel = cookie.data.soundStartBroadcastLabel;
+					soundStartSharingDesktop = cookie.data.soundStartSharingDesktop;
+					soundStartSharingDesktopLabel = cookie.data.soundStartSharingDesktopLabel;
+					soundStopBroadcast = cookie.data.soundStopBroadcast;
+					soundStopBroadcastLabel = cookie.data.soundStopBroadcastLabel;
+					soundStopSharingDesktop = cookie.data.soundStopSharingDesktop;
+					soundStopSharingDesktopLabel = cookie.data.soundStopSharingDesktopLabel;
+					soundSwitchedLayout = cookie.data.soundSwitchedLayout;
+					soundSwitchedLayoutLabel = cookie.data.soundSwitchedLayoutLabel;
+					soundSwitchToPresenterMode = cookie.data.soundSwitchToPresenterMode;
+					soundSwitchToPresenterModeLabel = cookie.data.soundSwitchToPresenterModeLabel;
+					soundSwitchToViewerMode = cookie.data.soundSwitchToViewerMode;
+					soundSwitchToViewerModeLabel = cookie.data.soundSwitchToViewerModeLabel;
+					soundUserJoined = cookie.data.soundUserJoined;
+					soundUserJoinedLabel = cookie.data.soundUserJoinedLabel;
+					soundUserLeft = cookie.data.soundUserLeft;
+					soundUserLeftLabel = cookie.data.soundUserLeftLabel;
 				}
 			}
 			
 			/* Save data in Shared Object (Flash-Cookie) */
 			private function storeDataInCookie():void {
-				cookie.data.soundPublicChatMessage = soundPublicChatMessage;
-				cookie.data.soundPublicChatMessageLabel = soundPublicChatMessageLabel;
-				cookie.data.soundPrivateChatMessage = soundPrivateChatMessage;
-				cookie.data.soundPrivateChatMessageLabel = soundPrivateChatMessageLabel;
-				cookie.data.soundParticipantLeft = soundParticipantLeft;
-				cookie.data.soundParticipantLeftLabel = soundParticipantLeftLabel;
-				cookie.data.soundPresenterNameChange = soundPresenterNameChange;
-				cookie.data.soundPresenterNameChangeLabel = soundPresenterNameChangeLabel;
-				cookie.data.soundSwitchToViewerMode = soundSwitchToViewerMode;
-				cookie.data.soundSwitchToViewerModeLabel = soundSwitchToViewerModeLabel;
-				cookie.data.soundSwitchToPresenterMode = soundSwitchToPresenterMode;
-				cookie.data.soundSwitchToPresenterModeLabel = soundSwitchToPresenterModeLabel;
-				cookie.data.soundStartSharing = soundStartSharing;
-				cookie.data.soundStartSharingLabel = soundStartSharingLabel;
-				cookie.data.soundStopSharing = soundStopSharing;
-				cookie.data.soundStopSharingLabel = soundStopSharingLabel;
-				cookie.data.soundLayoutChanged = soundLayoutChanged;
-				cookie.data.soundLayoutChangedLabel = soundLayoutChangedLabel;
-				cookie.data.soundMeetingMuted = soundMeetingMuted;
-				cookie.data.soundMeetingMutedLabel = soundMeetingMutedLabel;
 				cookie.data.layoutItem = layoutItem;
 				cookie.data.layoutName = layoutName;
+				cookie.data.soundDisplaySlide = soundDisplaySlide;
+				cookie.data.soundDisplaySlideLabel = soundDisplaySlideLabel;
+				cookie.data.soundPrivateChatMessage = soundPrivateChatMessage;
+				cookie.data.soundPrivateChatMessageLabel = soundPrivateChatMessageLabel;
+				cookie.data.soundPublicChatMessage = soundPublicChatMessage;
+				cookie.data.soundPublicChatMessageLabel = soundPublicChatMessageLabel;
+				cookie.data.soundStartBroadcast = soundStartBroadcast;
+				cookie.data.soundStartBroadcastLabel = soundStartBroadcastLabel;
+				cookie.data.soundStartSharingDesktop = soundStartSharingDesktop;
+				cookie.data.soundStartSharingDesktopLabel = soundStartSharingDesktopLabel;
+				cookie.data.soundStopBroadcast = soundStopBroadcast;
+				cookie.data.soundStopBroadcastLabel = soundStopBroadcastLabel;
+				cookie.data.soundStopSharingDesktop = soundStopSharingDesktop;
+				cookie.data.soundStopSharingDesktopLabel = soundStopSharingDesktopLabel;
+				cookie.data.soundSwitchedLayout = soundSwitchedLayout;
+				cookie.data.soundSwitchedLayoutLabel = soundSwitchedLayoutLabel;
+				cookie.data.soundSwitchToPresenterMode = soundSwitchToPresenterMode;
+				cookie.data.soundSwitchToPresenterModeLabel = soundSwitchToPresenterModeLabel;
+				cookie.data.soundSwitchToViewerMode = soundSwitchToViewerMode;
+				cookie.data.soundSwitchToViewerModeLabel = soundSwitchToViewerModeLabel;
+				cookie.data.soundUserJoined = soundUserJoined;
+				cookie.data.soundUserJoinedLabel = soundUserJoinedLabel;
+				cookie.data.soundUserLeft = soundUserLeft;
+				cookie.data.soundUserLeftLabel = soundUserLeftLabel;
 				cookie.flush(); 
 			}
 			
 			/*private function deleteCookie():void { 
 				cookie.clear(); 
 			}*/ 
-						
+			
+			/* These functions are for the layout */
 			private function lockSettingsChanged(evt:LockControlEvent):void {
 				var lockSettings:LockSettingsVO = UserManager.getInstance().getConference().getLockSettings();
 				if (UsersUtil.amIModerator() || UsersUtil.amIPresenter()) {
@@ -468,152 +554,168 @@
 			}
 			
 			/* These functions respond to events and start the "playSound" function */
-			private function handlePublicChatMessageEvent(evt:PublicChatMessageEvent):void {
-				if (soundPublicChatMessage) {
-					playSound(soundPublicChatMessageLabel);
+			private function handleDisplaySlideEvent(evt:DisplaySlideEvent):void {
+				if (soundDisplaySlide) {
+					playSound(soundDisplaySlideLabel);
 				}
-			}
+			}			
 			
 			private function handlePrivateChatMessageEvent(evt:PrivateChatMessageEvent):void {
 				if (soundPrivateChatMessage) {
 					playSound(soundPrivateChatMessageLabel);
 				}
 			}
-						
-			private function handleUserLeftEvent(evt:UserLeftEvent):void {
-				if (soundParticipantLeft) {
-					playSound(soundParticipantLeftLabel);
-				}
-			}
 			
-			private function handlePresenterNameChange(evt:MadePresenterEvent):void {
-				if (soundPresenterNameChange) {
-					playSound(soundPresenterNameChangeLabel);
-				}
-			}
-			
-			private function handleSwitchToViewerMode(evt:MadePresenterEvent):void {
-				if (soundSwitchToViewerMode) {
-					playSound(soundSwitchToViewerModeLabel);
-				}
-			}
-			
-			private function handleSwitchToPresenterMode(evt:MadePresenterEvent):void {
-				if (soundSwitchToPresenterMode) {
-					playSound(soundSwitchToPresenterModeLabel);
-				}
-			}
-			
-			private function handleStartSharing(evt:ShareEvent):void {
-				if (soundStartSharing) {
-					playSound(soundStartSharingLabel);
-				}
-			}
-			
-			private function handleStopSharing(evt:ShareEvent):void {
-				if (soundStopSharing) {
-					playSound(soundStopSharingLabel);
-				}
-			}
-			
-			private function handleLayoutChanged(evt:LayoutChangedEvent):void {
-				if (soundLayoutChanged) {
-					playSound(soundLayoutChangedLabel);
-				}
-			}
-			
-			private function handleMeetingMuted(evt:MeetingMutedEvent):void {
-				if (soundMeetingMuted) {
-					playSound(soundMeetingMutedLabel);
-				}
-			}
-			
-			/* Save the audio layout settings in variables */
-			private function saveAudio(evt:Event):void {
-				soundPublicChatMessage = soundPublicChatMessageView.selected;
-				soundPublicChatMessageLabel = soundPublicChatMessageComboBox.selectedItem.toString();
-				soundPrivateChatMessage = soundPrivateChatMessageView.selected;
-				soundPrivateChatMessageLabel = soundPrivateChatMessageComboBox.selectedItem.toString();
-				soundParticipantLeft = soundParticipantLeftView.selected;
-				soundParticipantLeftLabel = soundParticipantLeftComboBox.selectedItem.toString();
-				soundPresenterNameChange = soundPresenterNameChangeView.selected;
-				soundPresenterNameChangeLabel = soundPresenterNameChangeComboBox.selectedItem.toString();
-				soundSwitchToViewerMode = soundSwitchToViewerModeView.selected;
-				soundSwitchToViewerModeLabel = soundSwitchToViewerModeComboBox.selectedItem.toString();
-				soundSwitchToPresenterMode = soundSwitchToPresenterModeView.selected;
-				soundSwitchToPresenterModeLabel = soundSwitchToPresenterModeComboBox.selectedItem.toString();
-				soundStartSharing = soundStartSharingView.selected;
-				soundStartSharingLabel = soundStartSharingComboBox.selectedItem.toString();
-				soundStopSharing = soundStopSharingView.selected;
-				soundStopSharingLabel = soundStopSharingComboBox.selectedItem.toString();
-				soundLayoutChanged = soundLayoutChangedView.selected;
-				soundLayoutChangedLabel = soundLayoutChangedComboBox.selectedItem.toString();
-				soundMeetingMuted = soundMeetingMutedView.selected;
-				soundMeetingMutedLabel = soundMeetingMutedComboBox.selectedItem.toString();
-				storeDataInCookie();
-			}
-			
-			/* These functions respond to the "Test sound" buttons in audio view */
-			private function testSoundPublicChatMessage(evt:MouseEvent):void {
+			private function handlePublicChatMessageEvent(evt:PublicChatMessageEvent):void {
 				if (soundPublicChatMessage) {
 					playSound(soundPublicChatMessageLabel);
 				}
 			}
 			
-			private function testSoundPrivateChatMessage(evt:MouseEvent):void {
-				if (soundPrivateChatMessage) {
-					playSound(soundPrivateChatMessageLabel);
+			private function handleStartBroadcastEvent(evt:StartBroadcastEvent):void {
+				if (soundStartBroadcast) {
+					playSound(soundStartBroadcastLabel);
 				}
 			}
 			
-			private function testSoundParticipantLeft(evt:MouseEvent):void {
-				if (soundParticipantLeft) {
-					playSound(soundParticipantLeftLabel);
+			private function handleStartSharingDesktopEvent(evt:AppletStartedEvent):void {
+				if (soundStartSharingDesktop) {
+					playSound(soundStartSharingDesktopLabel);
 				}
 			}
 			
-			private function testSoundPresenterNameChange(evt:MouseEvent):void {
-				if (soundPresenterNameChange) {
-					playSound(soundPresenterNameChangeLabel);
+			private function handleStopBroadcastEvent(evt:StopBroadcastEvent):void {
+				if (soundStopBroadcast) {
+					playSound(soundStopBroadcastLabel);
 				}
 			}
 			
-			private function testSoundSwitchToViewerMode(evt:MouseEvent):void {
-				if (soundSwitchToViewerMode) {
-					playSound(soundSwitchToViewerModeLabel);
+			private function handleStopSharingDesktopEvent(evt:ShareWindowEvent):void {
+				if (soundStopSharingDesktop) {
+					playSound(soundStopSharingDesktopLabel);
 				}
 			}
 			
-			private function testSoundSwitchToPresenterMode(evt:MouseEvent):void {
+			private function handleSwitchedLayoutEvent(evt:SwitchedLayoutEvent):void {
+				if (soundSwitchedLayout) {
+					playSound(soundSwitchedLayoutLabel);
+				}
+			}
+			
+			private function handleSwitchToPresenterModeEvent(evt:MadePresenterEvent):void {
 				if (soundSwitchToPresenterMode) {
 					playSound(soundSwitchToPresenterModeLabel);
 				}
 			}
 			
-			private function testSoundStartSharing(evt:MouseEvent):void {
-				if (soundStartSharing) {
-					playSound(soundStartSharingLabel);
+			private function handleSwitchToViewerModeEvent(evt:MadePresenterEvent):void {
+				if (soundSwitchToViewerMode) {
+					playSound(soundSwitchToViewerModeLabel);
 				}
 			}
 			
-			private function testSoundStopSharing(evt:MouseEvent):void {
-				if (soundStopSharing) {
-					playSound(soundStopSharingLabel);
+			private function handleUserJoinedEvent(evt:UserJoinedEvent):void {
+				if (soundUserJoined) {
+					playSound(soundUserJoinedLabel);
 				}
 			}
 			
-			private function testSoundLayoutChanged(evt:MouseEvent):void {
-				if (soundLayoutChanged) {
-					playSound(soundLayoutChangedLabel);
+			private function handleUserLeftEvent(evt:UserLeftEvent):void {
+				if (soundUserLeft) {
+					playSound(soundUserLeftLabel);
 				}
 			}
 			
-			private function testSoundMeetingMuted(evt:MouseEvent):void {
-				if (soundMeetingMuted) {
-					playSound(soundMeetingMutedLabel);
-				}
+			/* Save the audio settings in variables */
+			private function saveAudio(evt:Event):void {
+				soundDisplaySlide = soundDisplaySlideView.selected;
+				soundDisplaySlideLabel = soundDisplaySlideComboBox.selectedItem.toString();
+				soundPrivateChatMessage = soundPrivateChatMessageView.selected;
+				soundPrivateChatMessageLabel = soundPrivateChatMessageComboBox.selectedItem.toString();
+				soundPublicChatMessage = soundPublicChatMessageView.selected;
+				soundPublicChatMessageLabel = soundPublicChatMessageComboBox.selectedItem.toString();
+				soundStartBroadcast = soundStartBroadcastView.selected;
+				soundStartBroadcastLabel = soundStartBroadcastComboBox.selectedItem.toString();
+				soundStartSharingDesktop = soundStartSharingDesktopView.selected;
+				soundStartSharingDesktopLabel = soundStartSharingDesktopComboBox.selectedItem.toString();
+				soundStopBroadcast = soundStopBroadcastView.selected;
+				soundStopBroadcastLabel = soundStopBroadcastComboBox.selectedItem.toString();
+				soundStopSharingDesktop = soundStopSharingDesktopView.selected;
+				soundStopSharingDesktopLabel = soundStopSharingDesktopComboBox.selectedItem.toString();
+				soundSwitchedLayout = soundSwitchedLayoutView.selected;
+				soundSwitchedLayoutLabel = soundSwitchedLayoutComboBox.selectedItem.toString();
+				soundSwitchToPresenterMode = soundSwitchToPresenterModeView.selected;
+				soundSwitchToPresenterModeLabel = soundSwitchToPresenterModeComboBox.selectedItem.toString();
+				soundSwitchToViewerMode = soundSwitchToViewerModeView.selected;
+				soundSwitchToViewerModeLabel = soundSwitchToViewerModeComboBox.selectedItem.toString();
+				soundUserJoined = soundUserJoinedView.selected;
+				soundUserJoinedLabel = soundUserJoinedComboBox.selectedItem.toString();
+				soundUserLeft = soundUserLeftView.selected;
+				soundUserLeftLabel = soundUserLeftComboBox.selectedItem.toString();
+				storeDataInCookie();
+			}
+						
+			/* These functions respond to the "Test sound" buttons in audio view */
+			private function testSoundDisplaySlide(evt:MouseEvent):void {
+				soundDisplaySlideLabel = soundDisplaySlideComboBox.selectedItem.toString();
+				playSound(soundDisplaySlideLabel);
 			}
 			
+			private function testSoundPrivateChatMessage(evt:MouseEvent):void {
+				soundPrivateChatMessageLabel = soundPrivateChatMessageComboBox.selectedItem.toString();
+				playSound(soundPrivateChatMessageLabel);
+			}
+			
+			private function testSoundPublicChatMessage(evt:MouseEvent):void {
+				soundPublicChatMessageLabel = soundPublicChatMessageComboBox.selectedItem.toString();
+				playSound(soundPublicChatMessageLabel);
+			}
+			
+			private function testSoundStartBroadcast(evt:MouseEvent):void {
+				soundStartBroadcastLabel = soundStartBroadcastComboBox.selectedItem.toString();
+				playSound(soundStartBroadcastLabel);
+			}
+			
+			private function testSoundStartSharingDesktop(evt:MouseEvent):void {
+				soundStartSharingDesktopLabel = soundStartSharingDesktopComboBox.selectedItem.toString();
+				playSound(soundStartSharingDesktopLabel);
+			}
+			
+			private function testSoundStopBroadcast(evt:MouseEvent):void {
+				soundStopBroadcastLabel = soundStopBroadcastComboBox.selectedItem.toString();
+				playSound(soundStopBroadcastLabel);
+			}
+			
+			private function testSoundStopSharingDesktop(evt:MouseEvent):void {
+				soundStopSharingDesktopLabel = soundStopSharingDesktopComboBox.selectedItem.toString();
+				playSound(soundStopSharingDesktopLabel);
+			}
+			
+			private function testSoundSwitchedLayout(evt:MouseEvent):void {
+				soundSwitchedLayoutLabel = soundSwitchedLayoutComboBox.selectedItem.toString();
+				playSound(soundSwitchedLayoutLabel);
+			}
+			
+			private function testSoundSwitchToPresenterMode(evt:MouseEvent):void {
+				soundSwitchToPresenterModeLabel = soundSwitchToPresenterModeComboBox.selectedItem.toString();
+				playSound(soundSwitchToPresenterModeLabel);
+			}
+			
+			private function testSoundSwitchToViewerMode(evt:MouseEvent):void {
+				soundSwitchToViewerModeLabel = soundSwitchToViewerModeComboBox.selectedItem.toString();
+				playSound(soundSwitchToViewerModeLabel);
+			}
+			
+			private function testSoundUserJoined(evt:MouseEvent):void {
+				soundUserJoinedLabel = soundUserJoinedComboBox.selectedItem.toString();
+				playSound(soundUserJoinedLabel);
+			}
+			
+			private function testSoundUserLeft(evt:MouseEvent):void {
+				soundUserLeftLabel = soundUserLeftComboBox.selectedItem.toString();
+				playSound(soundUserLeftLabel);
+			}
+						
 			/* Open the Shortcut Editor */
 			private function openShortcutEditor(evt:MouseEvent):void {
 				var url:String = 'shortcutEditor/shortcutEditor.html';
@@ -623,7 +725,6 @@
 				catch(err:Error) {
 					trace("Error occurred!");
 				}
-				close();
 			}
 									
 		]]>
@@ -631,56 +732,64 @@
 	
 	<mx:TabNavigator width="100%" height="100%" creationPolicy="all">
 		<mx:Canvas width="100%" height="100%" label=" Audio ">
-			<mx:CheckBox id="soundPublicChatMessageView" x="180" y="30" label="Sound when new public chat message" click="saveAudio(event)" fontSize="12"/>
-			<mx:Button x="80" y="60" label="Test sound" click="testSoundPublicChatMessage(event)" height="22"/>
-			<mx:ComboBox id="soundPublicChatMessageComboBox" x="180" y="60" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:CheckBox id="soundPublicChatMessageView" x="150" y="30" label="Sound when new public chat message" click="saveAudio(event)" fontSize="12"/>
+			<mx:ComboBox id="soundPublicChatMessageComboBox" x="150" y="60" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:Button x="350" y="60" label="Test sound" click="testSoundPublicChatMessage(event)" height="22"/>
 			
-			<mx:CheckBox id="soundPrivateChatMessageView" x="180" y="110" label="Sound when new private chat message" click="saveAudio(event)" fontSize="12"/>
-			<mx:Button x="80" y="140" label="Test sound" click="testSoundPrivateChatMessage(event)" height="22"/>
-			<mx:ComboBox id="soundPrivateChatMessageComboBox" x="180" y="140" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:CheckBox id="soundPrivateChatMessageView" x="150" y="110" label="Sound when new private chat message" click="saveAudio(event)" fontSize="12"/>
+			<mx:ComboBox id="soundPrivateChatMessageComboBox" x="150" y="140" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:Button x="350" y="140" label="Test sound" click="testSoundPrivateChatMessage(event)" height="22"/>
 			
-			<mx:CheckBox id="soundParticipantLeftView" x="180" y="190" label="Sound when a other participant leaves Big Blue Button" click="saveAudio(event)" fontSize="12"/>
-			<mx:Button x="80" y="220" label="Test sound" click="testSoundParticipantLeft(event)" height="22"/>
-			<mx:ComboBox id="soundParticipantLeftComboBox" x="180" y="220" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:CheckBox id="soundDisplaySlideView" x="150" y="190" label="Sound when changing slide in Presentation" click="saveAudio(event)" fontSize="12"/>
+			<mx:ComboBox id="soundDisplaySlideComboBox" x="150" y="220" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:Button x="350" y="220" label="Test sound" click="testSoundDisplaySlide(event)" height="22"/>
 			
-			<mx:CheckBox id="soundPresenterNameChangeView" x="180" y="270" label="Sound when presenter name change" click="saveAudio(event)" fontSize="12"/>
-			<mx:Button x="80" y="300" label="Test sound" click="testSoundPresenterNameChange(event)" height="22"/>
-			<mx:ComboBox id="soundPresenterNameChangeComboBox" x="180" y="300" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:CheckBox id="soundSwitchToViewerModeView" x="150" y="270" label="Sound when another participant becomes presenter" click="saveAudio(event)" fontSize="12"/>
+			<mx:ComboBox id="soundSwitchToViewerModeComboBox" x="150" y="300" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:Button x="350" y="300" label="Test sound" click="testSoundSwitchToViewerMode(event)" height="22"/>
 			
-			<mx:CheckBox id="soundSwitchToViewerModeView" x="180" y="350" label="Sound when switch to viewer mode" click="saveAudio(event)" fontSize="12"/>
-			<mx:Button x="80" y="380" label="Test sound" click="testSoundSwitchToViewerMode(event)" height="22"/>
-			<mx:ComboBox id="soundSwitchToViewerModeComboBox" x="180" y="380" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:CheckBox id="soundSwitchToPresenterModeView" x="150" y="350" label="Sound when you become presenter" click="saveAudio(event)" fontSize="12"/>
+			<mx:ComboBox id="soundSwitchToPresenterModeComboBox" x="150" y="380" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:Button x="350" y="380" label="Test sound" click="testSoundSwitchToPresenterMode(event)" height="22"/>
 			
-			<mx:CheckBox id="soundSwitchToPresenterModeView" x="180" y="430" label="Sound when switch to presenter mode" click="saveAudio(event)" fontSize="12"/>
-			<mx:Button x="80" y="460" label="Test sound" click="testSoundSwitchToPresenterMode(event)" height="22"/>
-			<mx:ComboBox id="soundSwitchToPresenterModeComboBox" x="180" y="460" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:CheckBox id="soundStartSharingDesktopView" x="150" y="430" label="Sound when you share your desktop" click="saveAudio(event)" fontSize="12"/>
+			<mx:ComboBox id="soundStartSharingDesktopComboBox" x="150" y="460" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:Button x="350" y="460" label="Test sound" click="testSoundStartSharingDesktop(event)" height="22"/>
 			
-			<mx:CheckBox id="soundStartSharingView" x="180" y="510" label="Sound when start sharing" click="saveAudio(event)" fontSize="12"/>
-			<mx:Button x="80" y="540" label="Test sound" click="testSoundStartSharing(event)" height="22"/>
-			<mx:ComboBox id="soundStartSharingComboBox" x="180" y="540" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:CheckBox id="soundStopSharingDesktopView" x="150" y="510" label="Sound when you stop sharing your desktop" click="saveAudio(event)" fontSize="12"/>
+			<mx:ComboBox id="soundStopSharingDesktopComboBox" x="150" y="540" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:Button x="350" y="540" label="Test sound" click="testSoundStopSharingDesktop(event)" height="22"/>
 			
-			<mx:CheckBox id="soundStopSharingView" x="180" y="590" label="Sound when stop sharing" click="saveAudio(event)" fontSize="12"/>
-			<mx:Button x="80" y="620" label="Test sound" click="testSoundStopSharing(event)" height="22"/>
-			<mx:ComboBox id="soundStopSharingComboBox" x="180" y="620" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:CheckBox id="soundStartBroadcastView" x="150" y="590" label="Sound when you share your webcam" click="saveAudio(event)" fontSize="12"/>
+			<mx:ComboBox id="soundStartBroadcastComboBox" x="150" y="620" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:Button x="350" y="620" label="Test sound" click="testSoundStartBroadcast(event)" height="22"/>
 			
-			<mx:CheckBox id="soundLayoutChangedView" x="180" y="670" label="Sound when layout changed" click="saveAudio(event)" fontSize="12"/>
-			<mx:Button x="80" y="700" label="Test sound" click="testSoundLayoutChanged(event)" height="22"/>
-			<mx:ComboBox id="soundLayoutChangedComboBox" x="180" y="700" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:CheckBox id="soundStopBroadcastView" x="150" y="670" label="Sound when you stop sharing your webcam" click="saveAudio(event)" fontSize="12"/>
+			<mx:ComboBox id="soundStopBroadcastComboBox" x="150" y="700" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:Button x="350" y="700" label="Test sound" click="testSoundStopBroadcast(event)" height="22"/>
 			
-			<mx:CheckBox id="soundMeetingMutedView" x="180" y="750" label="Sound when meeting muted" click="saveAudio(event)" fontSize="12"/>
-			<mx:Button x="80" y="780" label="Test sound" click="testSoundMeetingMuted(event)" height="22"/>
-			<mx:ComboBox id="soundMeetingMutedComboBox" x="180" y="780" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:CheckBox id="soundSwitchedLayoutView" x="150" y="750" label="Sound when switching layout" click="saveAudio(event)" fontSize="12"/>
+			<mx:ComboBox id="soundSwitchedLayoutComboBox" x="150" y="780" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:Button x="350" y="780" label="Test sound" click="testSoundSwitchedLayout(event)" height="22"/>
 			
-			<mx:Label x="80" y="890"/>
+			<mx:CheckBox id="soundUserJoinedView" x="150" y="830" label="Sound when participant joins Big Blue Button" click="saveAudio(event)" fontSize="12"/>
+			<mx:ComboBox id="soundUserJoinedComboBox" x="150" y="860" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:Button x="350" y="860" label="Test sound" click="testSoundUserJoined(event)" height="22"/>
+			
+			<mx:CheckBox id="soundUserLeftView" x="150" y="910" label="Sound when another participant leaves Big Blue Button" click="saveAudio(event)" fontSize="12"/>
+			<mx:ComboBox id="soundUserLeftComboBox" x="150" y="940" editable="false" rowCount="5" change="saveAudio(event)"/>
+			<mx:Button x="350" y="940" label="Test sound" click="testSoundUserLeft(event)" height="22"/>
+			
+			<mx:Label x="150" y="1050"/>
 		</mx:Canvas>
 		<mx:Canvas width="100%" height="100%" label=" Layout ">
-			<mx:Label x="180" y="60" fontSize="12" text="This layout is displayed at startup:"/>
-			<mx:Label id="layoutSave" x="405" y="60" fontSize="12"/>
-			<mx:ComboBox id="layoutComboBox" x="180" y="90" editable="false" rowCount="10" change="onSelectedItemChanged(event)"/>
+			<mx:Label x="150" y="60" fontSize="12" text="This layout is displayed at startup:"/>
+			<mx:Label id="layoutSave" x="375" y="60" fontSize="12"/>
+			<mx:ComboBox id="layoutComboBox" x="150" y="90" editable="false" rowCount="10" change="onSelectedItemChanged(event)"/>
 		</mx:Canvas>
 		<mx:Canvas width="100%" height="100%" label=" Shortcuts ">
-			<mx:Label x="180" y="60" fontSize="12" text="Click on this button to open the shortcut editor."/>
-			<mx:Button x="180" y="90" label="Customize shortcuts" click="openShortcutEditor(event)" height="22"/>
+			<mx:Label x="150" y="60" fontSize="12" text="Push the button to open the shortcut editor in a new browser window."/>
+			<mx:Button x="150" y="90" label="Customize shortcuts" click="openShortcutEditor(event)" height="22"/>
 		</mx:Canvas>
 	</mx:TabNavigator>
 </MDIWindow>

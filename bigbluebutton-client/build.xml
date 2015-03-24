@@ -421,9 +421,9 @@
 
 	<target name="copy-resource-files" >
     
-    <copy todir="${BASE_DIR}/client/shortcutEditor" >
-      <fileset dir="${BASE_DIR}/libs/shortcutEditor" />
-    </copy>
+    		<copy todir="${BASE_DIR}/client/shortcutEditor" >
+      			<fileset dir="${BASE_DIR}/libs/shortcutEditor" />
+    		</copy>
     
 		<copy todir="${OUTPUT_DIR}/swfobject/" >
 			<fileset dir="${PROD_RESOURCES_DIR}/swfobject" />
