@@ -525,13 +525,24 @@
 			}
 			
 			private function onSelectedItemChanged(evt:Event):void {
-				dispatcher.dispatchEvent(new ChangeLayoutEvent(evt.currentTarget.selectedItem.localeKey));
-				layoutItem = evt.currentTarget.selectedItem.localeKey;
-				layoutName = evt.currentTarget.selectedItem.label;
-				layoutSave.text = layoutName;
-				storeDataInCookie();
-				timerAdjustmentsWindow.addEventListener(TimerEvent.TIMER, openAdjustmentsWindow);
-				timerAdjustmentsWindow.start();
+				if (layoutSave.text != evt.currentTarget.selectedItem.label) {
+					dispatcher.dispatchEvent(new ChangeLayoutEvent(evt.currentTarget.selectedItem.localeKey));
+					layoutItem = evt.currentTarget.selectedItem.localeKey;
+					layoutName = evt.currentTarget.selectedItem.label;
+					layoutSave.text = layoutName;
+					storeDataInCookie();
+					timerAdjustmentsWindow.addEventListener(TimerEvent.TIMER, openAdjustmentsWindow);
+					timerAdjustmentsWindow.start();
+				}
+			}
+			
+			private function setNameLayoutComboBox(evt:Event):void {
+				for each (var tempObject:Object in evt.currentTarget.dataProvider) {
+					if (tempObject.label == layoutSave.text) {
+						evt.currentTarget.selectedItem = tempObject;
+						break;
+					}
+				}
 			}
 			
 			private function openAdjustmentsWindow(evt:TimerEvent):void {
@@ -785,7 +796,7 @@
 		<mx:Canvas width="100%" height="100%" label=" Layout ">
 			<mx:Label x="150" y="60" fontSize="12" text="This layout is displayed at startup:"/>
 			<mx:Label id="layoutSave" x="375" y="60" fontSize="12"/>
-			<mx:ComboBox id="layoutComboBox" x="150" y="90" editable="false" rowCount="10" change="onSelectedItemChanged(event)"/>
+			<mx:ComboBox id="layoutComboBox" x="150" y="90" editable="false" rowCount="10" close="onSelectedItemChanged(event)" open="setNameLayoutComboBox(event)"/>
 		</mx:Canvas>
 		<mx:Canvas width="100%" height="100%" label=" Shortcuts ">
 			<mx:Label x="150" y="60" fontSize="12" text="Push the button to open the shortcut editor in a new browser window."/>
