@@ -26,7 +26,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 		   initialize="init()"
 	       creationComplete="onCreationComplete()"
 		   xmlns:mate="http://mate.asfusion.com/" 
-		   title="{ResourceUtil.getInstance().getString('bbb.shortcuthelp.title')}" >
+		   title="{ResourceUtil.getInstance().getString('bbb.shortcuthelp.title')}" 
+		   accessibilityName="{ResourceUtil.getInstance().getString('bbb.shortcuthelp.title.accessibilityName')}" >
 		   
 	<mate:Listener type="{LocaleChangeEvent.LOCALE_CHANGED}" method="localeChanged" />
 	<mate:Listener type="{MDIWindowEvent.CLOSE}" method="focusButton" />
