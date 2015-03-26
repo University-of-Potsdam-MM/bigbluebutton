@@ -58,7 +58,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	<mate:Listener type="{LockControlEvent.OPEN_LOCK_SETTINGS}" method="openLockSettingsWindow" />
 	<mate:Listener type="{InvalidAuthTokenEvent.INVALID_AUTH_TOKEN}" method="handleInvalidAuthToken" />
 	
-	<mate:Listener type="{ShortcutEvent.OPEN_ADJUSTMENTS_WIN}" method="openAdjustmentsWindow" />
+	<mate:Listener type="{BBBEvent.OPEN_ADJUSTMENTS_WIN}" method="openAdjustmentsWindow"/>
 	  
 	<mx:Script>
 		<![CDATA[
@@ -127,7 +127,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			private var logoutWindow:LoggedOutWindow;
 			private var connectionLostWindow:ConnectionLostWindow;
 			
-			private var adjustWindow:AdjustmentsWindow;
+			private var adjustmentsWindow:AdjustmentsWindow = new AdjustmentsWindow();
 			
 			[Bindable] private var baseIndex:int = 100000;
 			
@@ -190,6 +190,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				systemManager.addEventListener(Event.RESIZE, updateCopyrightLabelDimensions);
 				copyrightLabel2.addEventListener(FlexEvent.UPDATE_COMPLETE, updateCopyrightLabelDimensions);
 				updateCopyrightLabelDimensions();
+				
+				adjustmentsWindow.getDataFromCookie();
 			}
 
 			private function updateCopyrightLabelDimensions(e:Event = null):void {
@@ -283,24 +285,11 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			}
 			
 			public function openAdjustmentsWindow(e:Event = null):void {
-								
-				if (adjustWindow == null) {
-					adjustWindow = new AdjustmentsWindow();
-				    //adjustWindow.width = 700;
-					//adjustWindow.height = 400;
-				}
-				
-				/*if (adjustWindow.minimized)
-					adjustWindow.restore();*/
-				
-				/*if (adjustWindow.maximized)
-					adjustWindow.restore();*/
-				
-				mdiCanvas.windowManager.add(adjustWindow);
-				//mdiCanvas.windowManager.absPos(adjustWindow, mdiCanvas.width/2 - 350, mdiCanvas.height/2 - 200);
-				mdiCanvas.windowManager.absPos(adjustWindow, 0, 0);				
-				
-				//adjustWindow.focusHead();
+				adjustmentsWindow.width = 700;
+				adjustmentsWindow.height = 400;
+				mdiCanvas.windowManager.add(adjustmentsWindow);
+				mdiCanvas.windowManager.absPos(adjustmentsWindow, mdiCanvas.width/2 - 350, mdiCanvas.height/2 - 200);
+				mdiCanvas.windowManager.bringToFront(adjustmentsWindow);
 			}
 			
 			private function toggleFullScreen():void{
