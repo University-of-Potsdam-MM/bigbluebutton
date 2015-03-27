@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+
+BigBlueButton open source conferencing system - http://www.bigbluebutton.org/
+
+Copyright (c) 2012 BigBlueButton Inc. and by respective authors (see below).
+
+This program is free software; you can redistribute it and/or modify it under the
+terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 3.0 of the License, or (at your option) any later
+version.
+
+BigBlueButton is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along
+with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
+
+-->
+
+<!--
+Notes.mxml is the main view of the SharedNotes application
+-->
+<MDIWindow xmlns="flexlib.mdi.containers.*" xmlns:mx="http://www.adobe.com/2006/mxml" 
+	width="400" height="300" xmlns:mate="http://mate.asfusion.com/" 
+	implements="org.bigbluebutton.common.IBbbModuleWindow" creationComplete="onCreationComplete()"
+	label="Private Notes Window" layout="vertical">
+	
+	<mx:Script>
+		<![CDATA[
+			import flexlib.mdi.events.MDIWindowEvent;
+			import org.bigbluebutton.main.views.MainCanvas;
+			
+			private static const LOG:String = "Notes::NotesWindow - ";
+
+			private var proxy:PrivateNotesProxy;
+			public var moduleAttributes:Object;
+			
+			private var userName:String;
+			
+			private function onCreationComplete():void{
+				proxy = new PrivateNotesProxy(this, moduleAttributes);
+				userName = moduleAttributes.username;
+			}
+			
+			public function saveNotes():void{
+				var my_date:Date = new Date();
+				var file:FileReference = new FileReference();
+				var ba:ByteArray = new ByteArray();
+				ba.writeUTFBytes(txtArea.text);
+				//save into drive
+				file.save( ba, "notes.txt" ); 
+			}
+			
+			public function displayNewMessage(message:String):void{
+				txtArea.text += "\n" + message;
+			}
+			
+			public function getPrefferedPosition():String{ 
+				return MainCanvas.POPUP;
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<!-- The text area where the notes get displayed -->
+	<mx:TextArea id="txtArea" width="100%" height="90%" />
+	<mx:HBox width="100%">
+		<mx:Button id="btnSaveNotes" label="Save Notes" click="saveNotes()" />
+	</mx:HBox>
+</MDIWindow>

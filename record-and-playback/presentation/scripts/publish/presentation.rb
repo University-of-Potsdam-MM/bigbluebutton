@@ -801,6 +801,11 @@ def processPrivateNotes
 	return notesByUser
 end
 
+#######################################
+# appends one note to the appropriate #
+# list of notesByUser                 #
+# returns the new notesByUser         #
+#######################################
 def addOneUserNote(id, oneNote, notesByUser)
 	if(notesByUser.nil? or notesByUser.empty?)
 		notesByUser = Hash.new
@@ -856,8 +861,11 @@ def processActivitylog
 								if(color != "")
 									color = color+" "
 								end
-								helper[shape_id][:value] = "Presenter has drawn a " + color + node.xpath(".//type")[0].text() + " on the whiteboard on slide " + node.xpath(".//pageNumber")[0].text() + "."
-								
+								if("pencil".eql?node.xpath(".//type")[0].text())
+									helper[shape_id][:value] = "Presenter has drawn with a " + color + node.xpath(".//type")[0].text() + " on the whiteboard on slide " + node.xpath(".//pageNumber")[0].text() + "."
+								else
+									helper[shape_id][:value] = "Presenter has drawn a " + color + node.xpath(".//type")[0].text() + " on the whiteboard on slide " + node.xpath(".//pageNumber")[0].text() + "."
+								end
 								helper[shape_id][:in] = shape_start
 								
 								shapeEvents = shapeEvents.merge(helper)
@@ -937,7 +945,10 @@ def processActivitylog
 	end
 end
 
-
+######################################
+# orders events by their timestamps  #
+# returns the events ordered by time #
+######################################
 def orderTimes(eventTimes)
 	orderedEvents = Hash.new
 	if(eventTimes.nil? || eventTimes.empty?)
@@ -961,6 +972,10 @@ def orderTimes(eventTimes)
 	return orderedEvents
 end
 
+################################
+# concatenates two hashes      #
+# return the concatenated hash #
+################################
 def concatTwoHashs(h1, h2)
 	result = h1
 	h2.each do |key, values|
@@ -977,6 +992,11 @@ def concatTwoHashs(h1, h2)
 	return result
 end
 
+####################################
+# returns the userName if the user #
+# has been presenter. Otherwise    #
+# "<?>" is returned.               #
+####################################
 def userIdToName(userId)
 	$assign_presenter_events.each do |node|
 		if(node.xpath("./@eventname").text() == "AssignPresenterEvent")

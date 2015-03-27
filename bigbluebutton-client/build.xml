@@ -24,6 +24,7 @@
 	<property name="CHAT" value="ChatModule" />
 	<property name="ACTIVITYLOG" value="ActivitylogModule" />
 	<property name="EXAMPLE_CHAT" value="ExampleChatModule" />
+	<property name="PRIVATE_NOTES" value="PrivateNotesModule" />
 	<property name="PRESENT" value="PresentModule" />
 	<property name="DESKSHARE" value="DeskShareModule" />
 	<property name="DESKSHARE_SA" value="DeskshareStandalone" />
@@ -221,6 +222,10 @@
 	<target name="build-example-chat" description="Compile Example Chat Module">
 	        <build-module src="${SRC_DIR}" target="${EXAMPLE_CHAT}" />
 	</target>
+	
+	<target name="build-private-notes" description="Compile private notes Module">
+	        <build-module src="${SRC_DIR}" target="${PRIVATE_NOTES}" />
+	</target>	
   
   <target name="build-notes" description="Compile Notes Module">
     <build-module src="${SRC_DIR}" target="${NOTES}" />
@@ -307,8 +312,8 @@
 	
 	<!-- just a grouping of modules to compile -->
 	<target name="build-main-chat-present" 
-			depends="build-bbb-main, build-chat, build-activitylog, build-custom-chat, build-present, build-layout, build-broadcast, build-users"
-			description="Compile main, chat, activitylog, build-custom-chat, present modules">
+			depends="build-bbb-main, build-chat, build-activitylog, build-custom-chat, build-custom-notes, build-present, build-layout, build-broadcast, build-users"
+			description="Compile main, chat, activitylog, build-custom-chat, build-custom-notes, present modules">
 	</target>
 	
 	<!-- just a grouping of modules to compile -->
@@ -551,4 +556,5 @@
 
 	<target name="build-poll" depends="init-ant-contrib, build-polling" description="Build only the polling module." />
 	<target name="build-custom-chat" depends="init-ant-contrib, build-example-chat" description="Build the ExampleChatModule only to reduce build time" />
+	<target name="build-custom-notes" depends="init-ant-contrib, build-private-notes" description="Build the PrivateNotesModule only to reduce build time" />
 </project>
