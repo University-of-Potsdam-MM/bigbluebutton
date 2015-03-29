@@ -92,6 +92,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
       private function getCustomKeyCombos():Object {
         var keyCombosJson:String = ExternalInterface.call('getCustomKeySettings');
+        ExternalInterface.call("console.log", 'returned json:' + keyCombosJson);
         var newCombos:Object = new Object();
         if (keyCombos == null) loadKeyCombos(globalModifier);
         if (keyCombosJson) {
@@ -171,6 +172,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         keyCombos[globalModifier+(ResourceUtil.getInstance().getString('bbb.shortcutkey.flash.exit') as String)] = ShortcutEvent.FOCUS_AWAY_EVENT;
         keyCombos[globalModifier+(ResourceUtil.getInstance().getString('bbb.shortcutkey.shortcutWindow') as String)] = ShortcutEvent.REMOTE_OPEN_SHORTCUT_WIN;
         keyCombos[globalModifier+(ResourceUtil.getInstance().getString('bbb.shortcutkey.logout') as String)] = ShortcutEvent.LOGOUT;
+        keyCombos[globalModifier+(ResourceUtil.getInstance().getString('bbb.shortcutkey.activitylog') as String)] = ShortcutEvent.OPEN_ACTIVITYLOG_WIN;
+        keyCombos[globalModifier+(ResourceUtil.getInstance().getString('bbb.shortcutkey.adjustments') as String)] = ShortcutEvent.OPEN_ADJUSTMENTS_WIN;
         
         // Module-dependent keys
         if (ShortcutOptions.usersActive){
@@ -227,8 +230,13 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         }
 
         if(customKeyCombos[keyPress]) {
-          ExternalInterface.call("alert", 'key press!' + customKeyCombos[keyPress].action);
-          keyPress = keyCombos[customKeyCombos[keyPress].original];
+          // ExternalInterface.call("alert", 'key press!' + customKeyCombos[keyPress].action);
+          ExternalInterface.call("console.log", 'focus:' + ResourceUtil.getInstance().getString('bbb.shortcutkey.activitylog') as String);
+          ExternalInterface.call("console.log", 'key press:' + customKeyCombos[keyPress].custom);
+          ExternalInterface.call("console.log", 'key press for:' + customKeyCombos[keyPress].original);
+          keyPress = customKeyCombos[keyPress].original;
+          ExternalInterface.call("console.log", 'key press CHANGE:' + keyPress);
+          ExternalInterface.call("console.log", 'keyCombos:' + keyCombos[keyPress]);
         }
 
         if (keyCombos[keyPress]) {

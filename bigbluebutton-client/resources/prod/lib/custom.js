@@ -2,7 +2,7 @@ var key = "BigBlueButtonShortcutMapping";
 function getCustomKeySettings() {
   var json = localStorage.getItem(key);
   console.log("Json returned: " + json);
-  return jsonString;
+  return json;
 }
 function setCustomKeySettings(json) {
   console.log(json);
