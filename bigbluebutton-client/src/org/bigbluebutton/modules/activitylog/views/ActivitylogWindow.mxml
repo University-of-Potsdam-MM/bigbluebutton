@@ -131,7 +131,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				}				
 			}
 			
-			private function focusWindow(e:ShortcutEvent):void{
+			public function focusWindow(e:ShortcutEvent = null):void{
+				ExternalInterface.call("event arrived!");
 				focusManager.setFocus(titleBarOverlay);
 			}
 			
