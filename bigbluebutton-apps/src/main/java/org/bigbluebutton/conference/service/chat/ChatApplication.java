@@ -34,6 +34,21 @@ public class ChatApplication {
 		bbbInGW = inGW;
 	}
 	
+	public void sendAlog(String meetingID, String requesterID) {
+		String replyTo = meetingID + "/" + requesterID; 
+		bbbInGW.getAlog(meetingID, requesterID, replyTo);
+	}
+
+	public void sendAlogHistory(String meetingID, String requesterID, String answer) {
+		String replyTo = meetingID + "/" + requesterID; 
+		bbbInGW.getAlogHistory(meetingID, requesterID, replyTo, answer);
+	}
+
+	public void sendAlogSlide(String meetingID, String requesterID, String answer) {
+		String replyTo = meetingID + "/" + requesterID; 
+		bbbInGW.getAlogSlide(meetingID, requesterID, replyTo, answer);
+	}
+
 	public void sendPublicChatHistory(String meetingID, String requesterID) {
 		// Just hardcode as we don't really need it for flash client. (ralam may 7, 2014)
 		String replyTo = meetingID + "/" + requesterID; 

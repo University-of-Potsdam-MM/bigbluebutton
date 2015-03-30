@@ -352,6 +352,33 @@ case class SendPrivateMessageEvent(
     version:String = Versions.V_0_0_1
 ) extends IOutMessage
 
+case class AlogReply(
+    meetingID: String, 
+    recorded: Boolean, 
+    requesterID: String, 
+    replyTo: String,
+    message: String,
+    version:String = Versions.V_0_0_1
+) extends IOutMessage
+
+case class AlogHistoryReply(
+    meetingID: String, 
+    recorded: Boolean, 
+    requesterID: String, 
+    replyTo: String,
+    answer: String,
+    version:String = Versions.V_0_0_1
+) extends IOutMessage
+
+case class AlogSlideReply(
+    meetingID: String, 
+    recorded: Boolean, 
+    requesterID: String, 
+    replyTo: String,
+    answer: String,
+    version:String = Versions.V_0_0_1
+) extends IOutMessage
+
 // Layout
 case class GetCurrentLayoutReply(
     meetingID: String, 

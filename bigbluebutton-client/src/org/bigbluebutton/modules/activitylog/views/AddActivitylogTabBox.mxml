@@ -29,7 +29,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         <![CDATA[
             import com.asfusion.mate.events.Dispatcher;
             import org.bigbluebutton.util.i18n.ResourceUtil;
-	    import org.bigbluebutton.main.events.ShortcutEvent;//2
+	    import org.bigbluebutton.main.events.ShortcutEvent;
             import org.bigbluebutton.modules.activitylog.model.ActivitylogOptions;
 	    import org.bigbluebutton.modules.activitylog.events.ActivitylogOptionsEvent;
 	    import org.bigbluebutton.modules.activitylog.events.PublicActivitylogMessageEvent;
@@ -51,6 +51,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                 dispatchEvent(e);
             }
             
+	    // called if checkbox state is changed, dispatches event to init filtering
 	    private function throwFilterEvent(tag:String, selected:Boolean): void {
 		var msg:ActivitylogMessageVO = new ActivitylogMessageVO();
 		msg.fromUsername = "Filter";
@@ -60,6 +61,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 		dispatchEvent(e);
 	    }
 
+	    // called if save button is clicked, dispatches event to init saving alog as file
 	    private function throwSaveFileEvent(): void {
 		var sfmsg:ActivitylogMessageVO = new ActivitylogMessageVO();
 		sfmsg.fromUsername = "Save File";
@@ -69,10 +71,12 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 		dispatchEvent(ev);
 	    }
 
+	    // called if save with queries checkbox is checked/unchecked
 	    private function throwSaveWithQueriesEvent(): void {
 		DataProvider.setSaveWithQueries(cbSaveWithQueries.selected);
 	    }
 
+	    // called if help button is clicked, dispatches event to init help output and to highlight alog tab
 	    private function throwHelpInfoEvent(): void {
 		var himsg:ActivitylogMessageVO = new ActivitylogMessageVO();
 		himsg.fromUsername = "Help Info";
@@ -87,68 +91,83 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
      
         ]]>
     </mx:Script>
-    
+
+    <!-- GUI design for options tab of alog module -->
+
     <mx:HBox width="100%" height="100%">
         <mx:VBox  height="100%" width="50%" enabled="true">
             <mx:VBox id="optionsBox" height="100%" width="50%" >
                 <mx:Label text="{ResourceUtil.getInstance().getString('bbb.activitylog.activitylogOptions')}" />
+		<!-- choose font size combobox -->
                 <mx:HBox width="100%">
                     <mx:Label text="{ResourceUtil.getInstance().getString('bbb.activitylog.fontSize')}" />
-                    <mx:ComboBox width="60" id="cmbFontSize" dataProvider="{fontSizes}" close="changeFontSize()" selectedIndex="1" toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.cmbFontSize.toolTip')}"/>
+                    <mx:ComboBox width="60" id="cmbFontSize" dataProvider="{fontSizes}" close="changeFontSize()" selectedIndex="1" 
+				 toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.cmbFontSize.toolTip')}"
+				 accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.options.access.combofontsize')}"/>
                 </mx:HBox>
+		<!-- save button and save query checkbox -->
 		<mx:HBox width="100%">
 			<mx:Label text="{ResourceUtil.getInstance().getString('bbb.activitylog.label.save')}" />
 			<mx:Button label="{ResourceUtil.getInstance().getString('bbb.activitylog.saveBtn')}" id="saveBtn" height="20"
 		         	styleName="activitylogControlBarSendButtonStyle"
 		         	toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.saveBtn.toolTip')}" 
-		         	click="throwSaveFileEvent()" />
+		         	click="throwSaveFileEvent()" 
+				accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.options.access.saveBtn')}"/>
 			<mx:CheckBox id="cbSaveWithQueries" 
 				selected="{DataProvider.cbSaveWithQueries}" 
 				label="{ResourceUtil.getInstance().getString('bbb.activitylog.label.cb.SaveWithQueries')}"
 				click="throwSaveWithQueriesEvent()" 
-				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.QUERY')}"/>
+				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.QUERY')}"
+				accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.options.access.cbsavewithqueries')}" />
 		</mx:HBox>
-
+		<!-- help button -->
 		<mx:HBox width="100%">
 			<mx:Label text="{ResourceUtil.getInstance().getString('bbb.activitylog.label.help')}" />
 			<mx:Button label="{ResourceUtil.getInstance().getString('bbb.activitylog.helpBtn')}" id="helpBtn" height="20"
 		         	styleName="activitylogControlBarSendButtonStyle"
 		         	toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.helpBtn.toolTip')}" 
-		         	click="throwHelpInfoEvent()" />
+		         	click="throwHelpInfoEvent()" 
+				accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.options.access.helpBtn')}"/>
 		</mx:HBox>
-		
+		<!-- filter checkboxes -->
 		<mx:VBox width="100%" paddingLeft="10">
 			<mx:Label text="{ResourceUtil.getInstance().getString('bbb.activitylog.label.filter')}" />
 			<mx:CheckBox id="cbUser" 
 				selected="{DataProvider.cbUser}" 
 				label="{ResourceUtil.getInstance().getString('bbb.activitylog.label.cb.USER')}"
 				click="throwFilterEvent(&apos;USER&apos;,cbUser.selected)" 
-				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.USER')}"/>
+				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.USER')}"
+				accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.options.access.cbuser')}" />
 			<mx:CheckBox id="cbBoard" 
 				selected="{DataProvider.cbBoard}" 
 				label="{ResourceUtil.getInstance().getString('bbb.activitylog.label.cb.BOARD')}"
 				click="throwFilterEvent(&apos;BOARD&apos;,cbBoard.selected)" 
-				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.BOARD')}"/>
+				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.BOARD')}"
+				accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.options.access.cbboard')}" />
 			<mx:CheckBox id="cbQuery" 
 				selected="{DataProvider.cbQuery}" 
 				label="{ResourceUtil.getInstance().getString('bbb.activitylog.label.cb.QUERY')}"
 				click="throwFilterEvent(&apos;QUERY&apos;,cbQuery.selected)" 
-				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.QUERY')}"/>
+				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.QUERY')}"
+				accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.options.access.cbquery')}" />
 			<mx:CheckBox id="cbMeeting" 
 				selected="{DataProvider.cbMeeting}" 
 				label="{ResourceUtil.getInstance().getString('bbb.activitylog.label.cb.MEETING')}"
 				click="throwFilterEvent(&apos;MEETING&apos;,cbMeeting.selected)" 
-				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.MEETING')}"/>
+				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.MEETING')}"
+				accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.options.access.cbmeeting')}" />
 			<mx:CheckBox id="cbPubChat" 
 				selected="{DataProvider.cbPubChat}" 
 				label="{ResourceUtil.getInstance().getString('bbb.activitylog.label.cb.PUBCHAT')}"
 				click="throwFilterEvent(&apos;PUBCHAT&apos;,cbPubChat.selected)" 
-				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.PUBCHAT')}"/>
+				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.PUBCHAT')}"
+				accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.options.access.cbpubchat')}" />
 			<mx:CheckBox id="cbPrivChat" 
 				selected="{DataProvider.cbPrivChat}" 
 				label="{ResourceUtil.getInstance().getString('bbb.activitylog.label.cb.PRIVCHAT')}" 
 				click="throwFilterEvent(&apos;PRIVCHAT&apos;,cbPrivChat.selected)" 
-				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.PRIVCHAT')}"/>
+				toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.toolTip.cb.PRIVCHAT')}"
+				accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.options.access.cbprivchat')}" />
 		</mx:VBox>
 
             </mx:VBox>

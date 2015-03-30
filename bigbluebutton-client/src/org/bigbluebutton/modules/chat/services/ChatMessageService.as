@@ -84,6 +84,18 @@ package org.bigbluebutton.modules.chat.services
     public function getPublicChatMessages():void {
       sender.getPublicChatMessages();
     }
+
+    public function getAlogMessages():void {
+      sender.getAlogMessages();
+    }
+
+    public function getAlogHistoryMessages():void {
+      sender.getAlogHistoryMessages();
+    }
+
+    public function getAlogSlideMessages():void {
+      sender.getAlogSlideMessages();
+    }
     
     private static const SPACE:String = " ";
     

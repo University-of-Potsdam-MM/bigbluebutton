@@ -17,10 +17,34 @@ class ChatClientMessageSender(service: ConnectionInvokerService) extends OutMess
 	    case msg: GetChatHistoryReply               => handleGetChatHistoryReply(msg)
 	    case msg: SendPublicMessageEvent            => handleSendPublicMessageEvent(msg)
 	    case msg: SendPrivateMessageEvent           => handleSendPrivateMessageEvent(msg)
+	    case msg: AlogReply           		=> handleAlogReply(msg)
+	    case msg: AlogHistoryReply           	=> handleAlogHistoryReply(msg)
+	    case msg: AlogSlideReply           		=> handleAlogSlideReply(msg)
 	    case _ => // do nothing
 	  }
 	}   
   
+  private def handleAlogReply(msg: AlogReply) {
+	val message = new java.util.HashMap[String, Object]()
+	message.put("msg", msg.message)
+	val m = new DirectClientMessage(msg.meetingID, msg.requesterID, "AlogReply", message);
+	service.sendMessage(m);
+  }
+
+  private def handleAlogHistoryReply(msg: AlogHistoryReply) {
+	val message = new java.util.HashMap[String, Object]()
+	message.put("msg", msg.answer)
+	val m = new DirectClientMessage(msg.meetingID, msg.requesterID, "AlogHistoryReply", message);
+	service.sendMessage(m);
+  }
+
+  private def handleAlogSlideReply(msg: AlogSlideReply) {
+	val message = new java.util.HashMap[String, Object]()
+	message.put("msg", msg.answer)
+	val m = new DirectClientMessage(msg.meetingID, msg.requesterID, "AlogSlideReply", message);
+	service.sendMessage(m);
+  }
+
   private def handleGetChatHistoryReply(msg: GetChatHistoryReply) {	
     val gson = new Gson();
     val message = new java.util.HashMap[String, Object]()
@@ -43,8 +67,7 @@ class ChatClientMessageSender(service: ConnectionInvokerService) extends OutMess
   private def handleSendPublicMessageEvent(msg: SendPublicMessageEvent) { 
     val gson = new Gson()
 	val jsonMsg = gson.toJson(mapAsJavaMap(msg.message))
-//	System.out.println("************ PUBLIC CHAT MESSAGE = \n" + jsonMsg + "\n")
-	  
+	System.out.println("************ PUBLIC CHAT MESSAGE = \n" + jsonMsg + "\n")
 	val m = new BroadcastClientMessage(msg.meetingID, "ChatReceivePublicMessageCommand", mapAsJavaMap(msg.message));
 	service.sendMessage(m);    
   }

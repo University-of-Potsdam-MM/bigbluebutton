@@ -346,6 +346,18 @@ class BigBlueButtonInGW(bbbGW: BigBlueButtonGateway, presUtil: PreuploadedPresen
 	def getChatHistory(meetingID: String, requesterID: String, replyTo: String) {
 	  chatGW.getChatHistory(meetingID, requesterID, replyTo)
 	}
+
+	def getAlog(meetingID: String, requesterID: String, replyTo: String) {
+	  chatGW.getAlog(meetingID, requesterID, replyTo)
+	}
+
+	def getAlogHistory(meetingID: String, requesterID: String, replyTo: String, answer: String) {
+	  chatGW.getAlogHistory(meetingID, requesterID, replyTo, answer)
+	}
+
+	def getAlogSlide(meetingID: String, requesterID: String, replyTo: String, answer: String) {
+	  chatGW.getAlogSlide(meetingID, requesterID, replyTo, answer)
+	}
 	
 	def sendPublicMessage(meetingID: String, requesterID: String, message: java.util.Map[String, String]) {
 	  // Convert java Map to Scala Map, then convert Mutable map to immutable map

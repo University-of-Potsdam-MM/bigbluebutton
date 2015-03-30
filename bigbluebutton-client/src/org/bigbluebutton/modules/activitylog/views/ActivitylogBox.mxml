@@ -61,6 +61,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   <mate:Listener type="{ShortcutEvent.CHANGE_FONT_COLOUR}" method="focusColourPicker" />
   <mate:Listener type="{ShortcutEvent.SEND_MESSAGE}" method="remoteSendMessage" />
   <mate:Listener type="{ShortcutEvent.ACTIVITYLOG_DEBUG}" method="activitylogDebugInfo" />
+  
+  <mate:Listener type="{LogoutEvent.USER_LOGGED_OUT}" method="handleUserLogoutAlog" />
 	
 	<mate:Listener type="{LockControlEvent.CHANGED_LOCK_SETTINGS}" method="lockSettingsChanged" />
 
@@ -79,6 +81,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.core.managers.UserManager;
 			import org.bigbluebutton.main.events.ShortcutEvent;
 			import org.bigbluebutton.main.events.UserLeftEvent;
+			import org.bigbluebutton.main.events.LogoutEvent;
 			import org.bigbluebutton.main.model.users.BBBUser;
 			import org.bigbluebutton.main.model.users.Conference;
 			import org.bigbluebutton.modules.activitylog.ActivitylogConstants;
@@ -96,7 +99,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.modules.activitylog.vo.ActivitylogMessageVO;
 			import org.bigbluebutton.modules.activitylog.services.MessageReceiver;
 			import org.bigbluebutton.util.i18n.ResourceUtil;
-			import flash.events.IEventDispatcher;//
+			import flash.events.IEventDispatcher;
 
       private static const LOG:String = "Activitylog::ActivitylogBox - ";
       
@@ -268,11 +271,23 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         txtMsgArea.setFocus();
         txtMsgArea.drawFocus(true);
       }
-			
+      
+      private function handleUserLogoutAlog(event:LogoutEvent):void {
+	activitylogMessages.handleUserLogout();
+      }
+      
       private function handlePublicActivitylogMessageEvent(event:PublicActivitylogMessageEvent):void {
         if (publicActivitylog) {
-          activitylogMessages.newActivitylogMessage(event.message);
-          scrollToEndOfMessage();
+          if (event.message.fromUsername == "HISTORY") {
+	    activitylogMessages.loadHistoryFromServer(event.message.message);
+	  }
+	  else if (event.message.fromUsername == "SLIDECONTENT") {
+	    activitylogMessages.loadSlideFromServer(event.message.message);
+	  } 
+	  else {
+	    activitylogMessages.newActivitylogMessage(event.message);
+	    scrollToEndOfMessage();
+	  }
         }
       }
       
@@ -576,10 +591,11 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       }
 
       private function handleTextAreaKeyUpEvent(e:KeyboardEvent):void {
-		if (e.keyCode == Keyboard.ENTER) { // send with enter
+		// send with enter
+		if (e.keyCode == Keyboard.ENTER) { 
 			sendMessages();
 		}
-		// go through cmd history with arrow up and down keys
+		// go through CLI history with arrow up and down keys
 		if (e.keyCode == 38) { // history up
 			if (lmcount-lmoffset > 0) {
 				lmoffset = lmoffset + 1;
@@ -604,7 +620,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			}
 		}
 	  }
-	// for cmd history
+	// for CLI history
 	private var lastMessages:ArrayCollection = new ArrayCollection();
 	private var lmcount:int = -1;
 	private var lmoffset:int = -1;
@@ -653,12 +669,16 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                  tabIndex="{baseIndex+1}"
 				 accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.input.accessibilityName')}" />
     <mx:VBox verticalScrollPolicy="off" verticalAlign="middle" height="100%" >
-      <!--<mx:Button label="{ResourceUtil.getInstance().getString('bbb.activitylog.sendBtn')}" id="sendBtn" height="30"
+      <!-- 
+	// Removed the send button, because CLI don't need some
+
+	<mx:Button label="{ResourceUtil.getInstance().getString('bbb.activitylog.sendBtn')}" id="sendBtn" height="30"
                  styleName="activitylogControlBarSendButtonStyle"
                  toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.sendBtn.toolTip')}" 
                  click="sendMessages()"
                  tabIndex="{baseIndex+2}"
-                 accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.sendBtn.accessibilityName')}"/>  -->
+                 accessibilityName="{ResourceUtil.getInstance().getString('bbb.activitylog.sendBtn.accessibilityName')}"/>  
+	-->
 		<mx:ColorPicker id="cmpColorPicker" showTextField="false" width="100%" visible="{activitylogOptions.colorPickerIsVisible}" includeInLayout="{activitylogOptions.colorPickerIsVisible}" 
 						toolTip="{ResourceUtil.getInstance().getString('bbb.activitylog.cmpColorPicker.toolTip')}" 
 						selectedColor="0x000000" dataProvider="{colorPickerColours}" swatchPanelStyleName="activitylogColorPickerStyle"

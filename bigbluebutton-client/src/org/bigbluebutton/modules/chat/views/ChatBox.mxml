@@ -89,6 +89,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.modules.chat.events.SendPrivateChatMessageEvent;
 			import org.bigbluebutton.modules.chat.events.SendPublicChatMessageEvent;
 			import org.bigbluebutton.modules.chat.events.TranscriptEvent;
+			import org.bigbluebutton.modules.chat.events.AlogEvent;
+			import org.bigbluebutton.modules.chat.events.AlogHistoryEvent;
+			import org.bigbluebutton.modules.chat.events.AlogSlideEvent;
 			import org.bigbluebutton.modules.chat.model.ChatConversation;
 			import org.bigbluebutton.modules.chat.model.ChatMessage;
 			import org.bigbluebutton.modules.chat.model.ChatOptions;
@@ -226,7 +229,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       private function loadChatHistory(event:TimerEvent):void {
         if (publicChat) {
           var disp:Dispatcher  = new Dispatcher();
-          disp.dispatchEvent(new TranscriptEvent(TranscriptEvent.LOAD_TRANSCRIPT));	
+          disp.dispatchEvent(new TranscriptEvent(TranscriptEvent.LOAD_TRANSCRIPT));
+	  // dispatch history event to load alog history from server
+	  disp.dispatchEvent(new AlogHistoryEvent(AlogHistoryEvent.LOAD_ALOG_HISTORY));
         }
       }
       

@@ -31,7 +31,7 @@ package org.bigbluebutton.modules.activitylog.services
   import org.bigbluebutton.modules.activitylog.events.PublicActivitylogMessageEvent;
   import org.bigbluebutton.modules.activitylog.events.TranscriptEvent;
   import org.bigbluebutton.modules.activitylog.vo.ActivitylogMessageVO;
-  
+
   public class MessageReceiver implements IMessageListener
   {
     
@@ -41,15 +41,25 @@ package org.bigbluebutton.modules.activitylog.services
       BBB.initConnectionManager().addMessageListener(this);
     }
     
+    // help function to get shorter strings from locales
     private function str(s:String):String {
 	return ResourceUtil.getInstance().getString("bbb.activitylog.MessageReceiver."+s);
     }
 
+    // called on all received events, entry point for creating event messages in alog
     public function onMessage(messageName:String, message:Object):void
     {
 	var result:String;
 	var tag:String;
 	switch (messageName) {
+		case "AlogHistoryReply":
+			tag = "HISTORY"; // tag hardcoded, because only in backend, should not be changed
+			result = message.msg;
+			break;
+		case "AlogSlideReply":
+			tag = "SLIDECONTENT"; // tag hardcoded, because only in backend, should not be changed
+			result = message.msg;
+			break;
 		case "assignPresenterCallback":
 			tag = str("tag.USER");
 			result = handleassignPresenterCallback(JSON.parse(message.msg));
@@ -72,7 +82,7 @@ package org.bigbluebutton.modules.activitylog.services
 			break;
 		case "moveCallback":
 			tag = null;
-			result = null; //ignore
+			result = null;
 			break;
 		case "participantJoined":
 			tag = str("tag.USER");
@@ -84,7 +94,7 @@ package org.bigbluebutton.modules.activitylog.services
 			break;	
 		case "PresentationCursorUpdateCommand":
 			tag = null;
-			result = null; //ignore
+			result = null;
 			break;
 		case "sharePresentationCallback":
 			tag = str("tag.BOARD");
@@ -111,14 +121,17 @@ package org.bigbluebutton.modules.activitylog.services
 			result = handleWhiteboardUndoCommand(JSON.parse(message.msg));
 			break;
 		default:
-			tag = str("tag.BOARD");
-			result = null;//messageName + ": " + message.msg; //null; //ignore others
+			tag = null;
+			result = null;
+			//tag = str("tag.BOARD");
+			//result = messageName + ": " + message.msg; // comment in if you wanna see all raw events in alog which are appearing
 	}
 	if (result != null) {
 		handleEvent(messageName, tag, result);
 	}
     }
 
+    // after event is processed, dispatch new event to start output process in alog conversation
     private function handleEvent(messageName:String, tag:String, result:String): void {
         var msg:ActivitylogMessageVO = new ActivitylogMessageVO();
         msg.activitylogType = ActivitylogConstants.PUBLIC_ACTIVITYLOG;
@@ -129,6 +142,11 @@ package org.bigbluebutton.modules.activitylog.services
         e.message = msg;
         dispatcher.dispatchEvent(e);
     }
+
+    // ##### From here there are the different handle-functions called from onMessage() function after receiving an event #####
+
+    // the following functions are not commented separate, they are all the same way:
+    // getting the necessary informations from different objects and building the string
 
     private function handleUserRaisedHand(map:Object): String {    
 	var user:BBBUser = new BBBUser();
@@ -188,49 +206,7 @@ package org.bigbluebutton.modules.activitylog.services
     }
 
     private function handleparticipantJoined(map:Object): String {
-	var out:String = str("msg.participantJoined").split("<name>").join(map.user.name);	
-	if (map.user.phoneUser == true)
-		out = out + " " + str("msg.participantJoined.phoneUser.true");
-	else
-		out = out + " " + str("msg.participantJoined.phoneUser.false");
-	if (map.user.role == "MODERATOR")
-		out = out + " " + str("msg.participantJoined.moderator.true");
-	else
-		out = out + " " + str("msg.participantJoined.moderator.false");
-	if (map.user.presenter == true)
-		out = out + " " + str("msg.participantJoined.presenter.true");
-	else
-		out = out + " " + str("msg.participantJoined.presenter.false");
-	if (map.user.hasStream == true)
-		out = out + " " + str("msg.participantJoined.hasStream.true").split("<name>").join(map.user.name);
-	else
-		out = out + " " + str("msg.participantJoined.hasStream.false").split("<name>").join(map.user.name);
-	if (map.user.voiceUser.talking == true)
-		out = out + " " + str("msg.participantJoined.talking.true");
-	else
-		out = out + " " + str("msg.participantJoined.talking.false");
-
-	if (map.user.permissions.disablePubChat == true)
-		out = out + " " + str("msg.participantJoined.permissions.pubChat.false");
-	else
-		out = out + " " + str("msg.participantJoined.permissions.pubChat.true");
-	if (map.user.permissions.disablePrivChat == true)
-		out = out + ", " + str("msg.participantJoined.permissions.privChat.false");
-	else
-		out = out + ", " + str("msg.participantJoined.permissions.privChat.true");
-	if (map.user.voiceUser.talking == true)	
-		if (map.user.permissions.disableMic == true)
-			out = out + ", " + str("msg.participantJoined.permissions.mic.false");
-		else
-			out = out + ", " + str("msg.participantJoined.permissions.mic.true");
-	if (map.user.hasStream == true)	
-		if (map.user.permissions.disableCam == true)
-			out = out + ", " + str("msg.participantJoined.permissions.cam.false");
-		else
-			out = out + ", " + str("msg.participantJoined.permissions.cam.true");
-	else
-		out = out + ".";
-
+	var out:String = str("msg.participantJoined").split("<name>").join(map.user.name);
 	return out;
     }
   }

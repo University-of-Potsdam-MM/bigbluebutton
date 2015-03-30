@@ -73,6 +73,11 @@ class MeetingActor(val meetingID: String, val meetingName: String, val recorded:
 	    case msg: SetLockSettings                        => handleSetLockSettings(msg)
 	    case msg: InitLockSettings                       => handleInitLockSettings(msg)
 	    case msg: GetChatHistoryRequest                  => handleGetChatHistoryRequest(msg) 
+
+	    case msg: AlogRequest                  	     => handleAlogRequest(msg)
+	    case msg: AlogHistoryRequest                     => handleAlogHistoryRequest(msg)
+	    case msg: AlogSlideRequest                       => handleAlogSlideRequest(msg)
+
 	    case msg: SendPublicMessageRequest               => handleSendPublicMessageRequest(msg)
 	    case msg: SendPrivateMessageRequest              => handleSendPrivateMessageRequest(msg)
 	    case msg: UserConnectedToGlobalAudio             => handleUserConnectedToGlobalAudio(msg)
