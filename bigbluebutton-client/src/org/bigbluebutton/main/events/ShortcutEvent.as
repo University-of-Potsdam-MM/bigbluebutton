@@ -42,7 +42,7 @@ package org.bigbluebutton.main.events {
 		public static const GOREAD_MESSAGE:String = 'GOREAD_MESSAGE';
 		public static const OPEN_SHORTCUT_WIN:String = 'OPEN_SHORTCUT_WIN';
 		public static const OPEN_ADJUSTMENTS_WIN:String = 'OPEN_ADJUSTMENTS_WIN';
-		
+
 		public static const FOCUS_USERS_WINDOW:String = 'FOCUS_USERS_WINDOW';
 		public static const FOCUS_VIDEO_WINDOW:String = 'FOCUS_VIDEO_WINDOW';
 		public static const FOCUS_PRESENTATION_WINDOW:String = 'FOCUS_PRESENTATION_WINDOW';
@@ -109,6 +109,7 @@ package org.bigbluebutton.main.events {
 		public static const FOCUS_ACTIVITYLOG_TABS:String = 'FOCUS_ACTIVITYLOG_TABS';
 		public static const FOCUS_ACTIVITYLOG_BOX:String = 'FOCUS_ACTIVITYLOG_BOX';
 		public static const ACTIVITYLOG_DEBUG:String = 'ACTIVITYLOG_DEBUG';
+		public static const OPEN_ACTIVITYLOG_WIN:String = 'OPEN_ACTIVITYLOG_WIN';
 
 
 		// Temporary string to help fix chat message navigation for screen readers

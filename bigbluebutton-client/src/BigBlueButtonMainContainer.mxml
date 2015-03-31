@@ -28,17 +28,22 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   width="100%" height="100%"
   horizontalScrollPolicy="off"
   verticalScrollPolicy="off"
-  creationComplete="init()">
+  creationComplete="init()"
+  addedToStage="hotkeyCapture()">
   
   <mx:Script>
     <![CDATA[
 		import com.asfusion.mate.events.Dispatcher;
-		
+	
+//    import com.adobe.serialization.json.JSON;	
 		import flash.events.Event;
+    import mx.controls.Alert;
 		
 		import mx.managers.HistoryManager;
 		import mx.managers.ToolTipManager;
+    import mx.managers.SystemManager;
 		import mx.utils.URLUtil;
+    import mx.core.FlexGlobals;
 		
 		import org.bigbluebutton.common.LogUtil;
 		import org.bigbluebutton.common.events.AddUIComponentToMainCanvas;
@@ -66,23 +71,53 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       private var hist:HistoryManager
       
       private var globalDispatcher:Dispatcher = new Dispatcher();
+
+      private var customKeyCombos:Object;
       
       protected function init():void {
         setupTooltips();
         setupAPI();
         EventBroadcaster.getInstance().addEventListener("configLoadedEvent", configLoadedEventHandler);
         BBB.initConfigManager();
-        globalModifier = ExternalInterface.call("determineGlobalModifier");
+        globalModifier = ExternalInterface.call("determineGlobalModifier"); 
+        ExternalInterface.addCallback("notifyCustomKeysChanged", onCustomKeysChanged);
+        hotkeyCapture();
+      }
+
+      private function onCustomKeysChanged(arg0:Boolean) {
+        if (arg0) {
+          customKeyCombos = getCustomKeyCombos();
+        }
+      }
+
+      private function getCustomKeyCombos():Object {
+        var keyCombosJson:String = ExternalInterface.call('getCustomKeySettings');
+        ExternalInterface.call("console.log", 'returned json:' + keyCombosJson);
+        var newCombos:Object = new Object();
+        if (keyCombos == null) loadKeyCombos(globalModifier);
+        if (keyCombosJson) {
+          var json:Object = JSON.parse(keyCombosJson);
+          for each (var jsonItem:Object in json) {
+            if (!jsonItem.hasOwnProperty('action')) jsonItem["action"] = keyCombos[jsonItem["original"]];
+            var comboObject:Object = { custom: jsonItem["custom"], original: jsonItem["original"], action: jsonItem["action"] };
+            newCombos[comboObject["custom"]] = comboObject;
+          }
+        } else {
+          ExternalInterface.call("console.log", 'keyCombos:' + JSON.stringify(keyCombos));
+          for (var item:String in keyCombos) {
+            var comboObject:Object = { custom: item, original: item, action: keyCombos[item] };
+            newCombos[comboObject["custom"]] = comboObject;
+          }
+          ExternalInterface.call("console.log", 'JSON:' + JSON.stringify(newCombos));
+          ExternalInterface.call('setCustomKeySettings', JSON.stringify(newCombos));
+        }
+        return newCombos;
       }
       
       private function configLoadedEventHandler(e:Event):void {
         LogUtil.debug("***** Config Loaded ****");
         mainShell.initOptions(null);
         ShortcutOptions.initialize();
-      }
-      
-      private function appComplete():void{
-        hotkeyCapture();
       }
       
       private var api:ExternalApiCallbacks;
@@ -137,6 +172,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         keyCombos[globalModifier+(ResourceUtil.getInstance().getString('bbb.shortcutkey.flash.exit') as String)] = ShortcutEvent.FOCUS_AWAY_EVENT;
         keyCombos[globalModifier+(ResourceUtil.getInstance().getString('bbb.shortcutkey.shortcutWindow') as String)] = ShortcutEvent.REMOTE_OPEN_SHORTCUT_WIN;
         keyCombos[globalModifier+(ResourceUtil.getInstance().getString('bbb.shortcutkey.logout') as String)] = ShortcutEvent.LOGOUT;
+        keyCombos[globalModifier+(ResourceUtil.getInstance().getString('bbb.shortcutkey.activitylog') as String)] = ShortcutEvent.OPEN_ACTIVITYLOG_WIN;
+        keyCombos[globalModifier+(ResourceUtil.getInstance().getString('bbb.shortcutkey.adjustments') as String)] = ShortcutEvent.OPEN_ADJUSTMENTS_WIN;
         
         // Module-dependent keys
         if (ShortcutOptions.usersActive){
@@ -175,7 +212,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       
       public function hotkeyCapture():void{
         trace("Entering hotkeyCapture");
-        stage.addEventListener(KeyboardEvent.KEY_DOWN, handleKeyDown);
+        var sm:SystemManager = SystemManager(BigBlueButton(FlexGlobals.topLevelApplication).systemManager);
+        sm.stage.addEventListener(KeyboardEvent.KEY_DOWN, handleKeyDown);
         ResourceUtil.getInstance().addEventListener(Event.CHANGE, localeChanged); // Listen for locale changing
         trace("Leaving hotkeyCapture");
       }
@@ -183,13 +221,24 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       // Handle general-access hotkeys, regardless of what window the user is focused in
       private function handleKeyDown(e:KeyboardEvent) :void {
         if (keyCombos == null) loadKeyCombos(globalModifier);
-        
+        if (customKeyCombos == null) {
+          customKeyCombos = getCustomKeyCombos();
+        }
         var keyPress:String = (e.ctrlKey  ? "control+" : "") + (e.shiftKey ? "shift+"   : "") + (e.altKey   ? "alt+"     : "") + e.keyCode;
-        
         if (e.keyCode < 64 || e.keyCode > 90){
           trace("Keypress debugging: KeyCode " + e.keyCode + " is nonalphabetic (probably)");
         }
-        
+
+        if(customKeyCombos[keyPress]) {
+          // ExternalInterface.call("alert", 'key press!' + customKeyCombos[keyPress].action);
+          ExternalInterface.call("console.log", 'focus:' + ResourceUtil.getInstance().getString('bbb.shortcutkey.activitylog') as String);
+          ExternalInterface.call("console.log", 'key press:' + customKeyCombos[keyPress].custom);
+          ExternalInterface.call("console.log", 'key press for:' + customKeyCombos[keyPress].original);
+          keyPress = customKeyCombos[keyPress].original;
+          ExternalInterface.call("console.log", 'key press CHANGE:' + keyPress);
+          ExternalInterface.call("console.log", 'keyCombos:' + keyCombos[keyPress]);
+        }
+
         if (keyCombos[keyPress]) {
           //LogUtil.debug("Caught shortcut: " + keyCombos[keyPress]);
           globalDispatcher.dispatchEvent(new ShortcutEvent(keyCombos[keyPress]));

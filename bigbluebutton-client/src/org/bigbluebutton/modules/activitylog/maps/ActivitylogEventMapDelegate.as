@@ -51,7 +51,7 @@ package org.bigbluebutton.modules.activitylog.maps {
 			activitylogOptions = new ActivitylogOptions();
 		}
 		
-		public function openActivitylogWindow():void {	
+		public function openActivitylogWindow():ActivitylogWindow {	
 			getActivitylogOptions();
 			_activitylogWindow.activitylogOptions = activitylogOptions;
 		   	_activitylogWindow.title = ResourceUtil.getInstance().getString("bbb.activitylog.title");
@@ -63,7 +63,8 @@ package org.bigbluebutton.modules.activitylog.maps {
 			event.window = _activitylogWindow; 
 			globalDispatcher.dispatchEvent(event);		   	
 		   	_activitylogWindowOpen = true;			
-			dispatchTranslationOptions();			
+			dispatchTranslationOptions();
+			return _activitylogWindow;
 		}
 		
 		public function closeActivitylogWindow():void {

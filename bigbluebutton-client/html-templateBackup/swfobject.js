@@ -427,6 +427,10 @@ var swfobject = function() {
 					}
 				}
 				var par = "";
+				
+				par += '<param name="wmode" value="transparent" />';
+				att += ' onmousedown="mouseIntercept"'
+				
 				for (var j in parObj) {
 					if (parObj[j] != Object.prototype[j]) { // filter out prototype additions from other potential libraries
 						par += '<param name="' + j + '" value="' + parObj[j] + '" />';

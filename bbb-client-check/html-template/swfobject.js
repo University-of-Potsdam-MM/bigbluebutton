@@ -432,6 +432,10 @@ var swfobject = function() {
 						par += '<param name="' + j + '" value="' + parObj[j] + '" />';
 					}
 				}
+				
+				par += '<param name="wmode" value="transparent" />';
+				att += ' onmousedown="mouseIntercept"'
+				
 				el.outerHTML = '<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"' + att + '>' + par + '</object>';
 				objIdArr[objIdArr.length] = attObj.id; // stored to fix object 'leaks' on unload (dynamic publishing only)
 				r = getElementById(attObj.id);	
