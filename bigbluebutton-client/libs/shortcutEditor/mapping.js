@@ -187,7 +187,7 @@ $(document).ready(function () {
         $(".mappingLine").each(function () {
             //finde die Eingabe von Original
             var original = $(this).find("span.original").text();
-            var to = $(this).find("input.custom").val();
+            var to = $(this).find("input").val();
             //Wenn original nur 1 Zeichen lang ist
             if (original.length === 1 && to.length === 1) {
 				var mappingItem =  findMappedItem(KEYCODES[original.charCodeAt(0)], mappings);
