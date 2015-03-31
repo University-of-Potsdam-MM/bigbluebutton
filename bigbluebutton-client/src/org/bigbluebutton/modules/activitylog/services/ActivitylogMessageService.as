@@ -18,76 +18,16 @@
  */
 package org.bigbluebutton.modules.activitylog.services
 {
-//  import flash.events.IEventDispatcher;
-//  import flash.external.ExternalInterface;
-//  import org.bigbluebutton.common.LogUtil;
-//  import org.bigbluebutton.core.BBB;
-//  import org.bigbluebutton.core.UsersUtil;
-//  import org.bigbluebutton.core.model.MeetingModel;
-//  import org.bigbluebutton.modules.activitylog.ActivitylogConstants;
-//  import org.bigbluebutton.modules.activitylog.events.PublicActivitylogMessageEvent;
   import org.bigbluebutton.modules.activitylog.vo.ActivitylogMessageVO;
 
   public class ActivitylogMessageService
   {
-//    private static const LOG:String = "Activitylog::ActivitylogMessageService - ";
     
     public var sender:MessageSender;
-//    public var receiver:MessageReceiver;
-//    public var dispatcher:IEventDispatcher;
-    
-//    public function sendPublicMessageFromApi(message:Object):void
-//    {
-//      trace(LOG + "sendPublicMessageFromApi");
-//      var msgVO:ActivitylogMessageVO = new ActivitylogMessageVO();
-//      msgVO.activitylogType = ActivitylogConstants.PUBLIC_ACTIVITYLOG;
-//      msgVO.fromUserID = message.fromUserID;
-//      msgVO.fromUsername = message.fromUsername;
-//      msgVO.fromColor = message.fromColor;
-//      msgVO.fromLang = message.fromLang;
-//      msgVO.fromTime = message.fromTime;
-//      msgVO.fromTimezoneOffset = message.fromTimezoneOffset;
-
-//      msgVO.message = message.message;
-//      
-//      sendPublicMessage(msgVO);
-//    }    
-    
-//    public function sendPrivateMessageFromApi(message:Object):void
-//    {
-//      trace(LOG + "sendPrivateMessageFromApi");
-//      var msgVO:ActivitylogMessageVO = new ActivitylogMessageVO();
-//      msgVO.activitylogType = ActivitylogConstants.PUBLIC_ACTIVITYLOG;
-//      msgVO.fromUserID = message.fromUserID;
-//      msgVO.fromUsername = message.fromUsername;
-//      msgVO.fromColor = message.fromColor;
-//      msgVO.fromLang = message.fromLang;
-//      msgVO.fromTime = message.fromTime;
-//      msgVO.fromTimezoneOffset = message.fromTimezoneOffset;
-//      
-//      msgVO.toUserID = message.toUserID;
-//      msgVO.toUsername = message.toUsername;
-//      
-//      msgVO.message = message.message;
-//      
-//      sendPrivateMessage(msgVO);
-
-//    }
     
     public function sendPublicMessage(message:ActivitylogMessageVO):void {
       sender.sendPublicMessage(message);
     }
-    
-//    public function sendPrivateMessage(message:ActivitylogMessageVO):void {
-//      sender.sendPrivateMessage(message);
-//    }
-    
-//    public function getPublicActivitylogMessages():void {
-//      sender.getPublicActivitylogMessages();
-//    }
-    
-//    private static const SPACE:String = " ";
-//    
-//    public function sendWelcomeMessage():void {}
+
   }
 }

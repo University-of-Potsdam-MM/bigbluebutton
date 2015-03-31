@@ -33,6 +33,8 @@ package org.bigbluebutton.modules.chat.services
   import org.bigbluebutton.modules.chat.events.TranscriptEvent;
   import org.bigbluebutton.modules.chat.vo.ChatMessageVO;
     import org.bigbluebutton.modules.activitylog.vo.ActivitylogMessageVO;
+
+  import flash.external.ExternalInterface;
   
   public class MessageReceiver implements IMessageListener
   {
@@ -40,6 +42,8 @@ package org.bigbluebutton.modules.chat.services
     private static const LOG:String = "Chat::MessageReceiver - ";
     
     public var dispatcher:IEventDispatcher;
+    
+    private var alogOn:Boolean = true;
     
     public function MessageReceiver()
     {
@@ -66,11 +70,11 @@ package org.bigbluebutton.modules.chat.services
     private function handleChatRequestMessageHistoryReply(messageName:String, message:Object):void {
       trace(LOG + "Handling chat history message [" + message.msg + "]");
       var chats:Array = JSON.parse(message.msg) as Array;
-      
+      alogOn = false; // unset flag to pass this chat events in the activitylog
       for (var i:int = 0; i < chats.length; i++) {
         handleChatReceivePublicMessageCommand(messageName, chats[i]);
       }
-         
+      alogOn = true; // set flag back
       var pcEvent:TranscriptEvent = new TranscriptEvent(TranscriptEvent.TRANSCRIPT_EVENT);
       dispatcher.dispatchEvent(pcEvent);
     }
@@ -98,6 +102,9 @@ package org.bigbluebutton.modules.chat.services
       pcCoreEvent.message = message;
       dispatcher.dispatchEvent(pcCoreEvent);
 
+      // dispatch activitylog event only if flag is set
+      if (alogOn) {
+      
 	var msg2:ActivitylogMessageVO = new ActivitylogMessageVO();
         msg2.activitylogType = ActivitylogConstants.PUBLIC_ACTIVITYLOG;
         msg2.fromUserID = " ";
@@ -112,6 +119,8 @@ package org.bigbluebutton.modules.chat.services
         var pcEventc:PublicActivitylogMessageEvent = new PublicActivitylogMessageEvent(PublicActivitylogMessageEvent.PUBLIC_ACTIVITYLOG_MESSAGE_EVENT);
         pcEventc.message = msg2;
         dispatcher.dispatchEvent(pcEventc);
+
+      }
     }
     
     private function handleChatReceivePrivateMessageCommand(messageName:String, message:Object):void {
@@ -137,6 +146,9 @@ package org.bigbluebutton.modules.chat.services
       pcCoreEvent.message = message;
       dispatcher.dispatchEvent(pcCoreEvent);  
 
+      // dispatch activitylog event only if flag is set
+      if (alogOn) {
+      
 	var msg3:ActivitylogMessageVO = new ActivitylogMessageVO();
         msg3.activitylogType = ActivitylogConstants.PUBLIC_ACTIVITYLOG;
         msg3.fromUserID = " ";
@@ -151,6 +163,8 @@ package org.bigbluebutton.modules.chat.services
         var pcEventc:PublicActivitylogMessageEvent = new PublicActivitylogMessageEvent(PublicActivitylogMessageEvent.PUBLIC_ACTIVITYLOG_MESSAGE_EVENT);
         pcEventc.message = msg3;
         dispatcher.dispatchEvent(pcEventc);    
+        
+      }
     }
   }
 }

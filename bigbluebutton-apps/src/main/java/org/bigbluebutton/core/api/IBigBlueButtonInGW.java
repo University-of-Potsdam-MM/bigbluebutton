@@ -100,11 +100,13 @@ public interface IBigBlueButtonInGW {
 	void getCurrentLayout(String meetingID, String requesterID);
 	void broadcastLayout(String meetingID, String requesterID, String layout);
 	void lockLayout(String meetingID, String setById, 
-                  boolean lock, boolean viewersOnly,
-                  scala.Option<String> layout);
+        boolean lock, boolean viewersOnly, scala.Option<String> layout);
 
 	// Chat
 	void getChatHistory(String meetingID, String requesterID, String replyTo);
+	void getAlog(String meetingID, String requesterID, String replyTo);
+	void getAlogHistory(String meetingID, String requesterID, String replyTo, String answer);
+	void getAlogSlide(String meetingID, String requesterID, String replyTo, String answer);
 	void sendPublicMessage(String meetingID, String requesterID, Map<String, String> message);
 	void sendPrivateMessage(String meetingID, String requesterID, Map<String, String> message);
 

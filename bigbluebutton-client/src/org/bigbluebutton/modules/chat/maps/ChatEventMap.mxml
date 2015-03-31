@@ -36,6 +36,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       import org.bigbluebutton.modules.chat.events.StartChatModuleEvent;
       import org.bigbluebutton.modules.chat.events.StopChatModuleEvent;
       import org.bigbluebutton.modules.chat.events.TranscriptEvent;
+      import org.bigbluebutton.modules.chat.events.AlogEvent;
+      import org.bigbluebutton.modules.chat.events.AlogHistoryEvent;
+      import org.bigbluebutton.modules.chat.events.AlogSlideEvent;
       import org.bigbluebutton.modules.chat.services.ChatMessageService;
       import org.bigbluebutton.modules.chat.services.MessageReceiver;
       import org.bigbluebutton.modules.chat.services.MessageSender;
@@ -80,6 +83,18 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	<EventHandlers type="{TranscriptEvent.LOAD_TRANSCRIPT}" >
     <MethodInvoker generator="{ChatMessageService}" method="getPublicChatMessages"/>
 	</EventHandlers>    
+
+    <EventHandlers type="{AlogEvent.LOAD_ALOG}" >
+        <MethodInvoker generator="{ChatMessageService}" method="getAlogMessages"/>
+    </EventHandlers> 
+
+    <EventHandlers type="{AlogHistoryEvent.LOAD_ALOG_HISTORY}" >
+        <MethodInvoker generator="{ChatMessageService}" method="getAlogHistoryMessages"/>
+    </EventHandlers> 
+
+    <EventHandlers type="{AlogSlideEvent.LOAD_ALOG_SLIDE}" >
+        <MethodInvoker generator="{ChatMessageService}" method="getAlogSlideMessages"/>
+    </EventHandlers> 
   
   <EventHandlers type="{TranscriptEvent.TRANSCRIPT_EVENT}" >
     <MethodInvoker generator="{ChatMessageService}" method="sendWelcomeMessage"/>

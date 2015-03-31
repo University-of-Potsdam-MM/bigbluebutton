@@ -130,7 +130,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				focusManager.setFocus(activitylogTabs);
 			}
 
-			//1 changing tab when clicking help button
+			// changing tab when clicking help button
 			private function focusForHelp(e:ShortcutEvent):void{
 				activitylogTabs.selectedIndex = 0;
 			}

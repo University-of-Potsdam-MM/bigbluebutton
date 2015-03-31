@@ -160,6 +160,26 @@ case class GetChatHistoryRequest(
     requesterID: String,
     replyTo: String
 ) extends InMessage
+
+case class AlogRequest(
+    meetingID: String, 
+    requesterID: String,
+    replyTo: String
+) extends InMessage
+
+case class AlogHistoryRequest(
+    meetingID: String, 
+    requesterID: String,
+    replyTo: String,
+    answer: String
+) extends InMessage
+
+case class AlogSlideRequest(
+    meetingID: String, 
+    requesterID: String,
+    replyTo: String,
+    answer: String
+) extends InMessage
                                  
 case class SendPublicMessageRequest(
     meetingID: String, 

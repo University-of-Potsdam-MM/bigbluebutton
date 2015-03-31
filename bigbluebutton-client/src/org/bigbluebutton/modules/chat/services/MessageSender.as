@@ -23,6 +23,7 @@ package org.bigbluebutton.modules.chat.services
   import org.bigbluebutton.core.BBB;
   import org.bigbluebutton.core.managers.ConnectionManager;
   import org.bigbluebutton.modules.chat.vo.ChatMessageVO;
+  import org.bigbluebutton.modules.activitylog.services.DataProvider;
 
   public class MessageSender
   {
@@ -44,6 +45,48 @@ package org.bigbluebutton.modules.chat.services
       );
     }
     
+    // send public alog messages to serverside alog
+    public function getAlogMessages():void
+    {  
+            var _nc:ConnectionManager = BBB.initConnectionManager();
+            _nc.sendMessage("chat.sendAlog", 
+            function(result:String):void { // On successful result
+            LogUtil.debug(result); 
+            },	                   
+            function(status:String):void { // status - On error occurred
+            LogUtil.error(status); 
+            }, DataProvider.logToServer
+            );
+    }
+
+    // send request to server to get public alog history
+    public function getAlogHistoryMessages():void
+    {  
+            var _nc:ConnectionManager = BBB.initConnectionManager();
+            _nc.sendMessage("chat.sendAlogHistory", 
+            function(result:String):void { // On successful result
+            LogUtil.debug(result); 
+            },	                   
+            function(status:String):void { // status - On error occurred
+            LogUtil.error(status); 
+            }, "alog"
+            );
+    }
+
+    // send request to server to get current slide content
+    public function getAlogSlideMessages():void
+    {  
+            var _nc:ConnectionManager = BBB.initConnectionManager();
+            _nc.sendMessage("chat.sendAlogSlide", 
+            function(result:String):void { // On successful result
+            LogUtil.debug(result); 
+            },	                   
+            function(status:String):void { // status - On error occurred
+            LogUtil.error(status); 
+            }, DataProvider.cur_page + " -/- " + DataProvider.cur_doc
+            );
+    }
+
     public function sendPublicMessage(message:ChatMessageVO):void
     {  
       trace(LOG + "Sending [chat.sendPublicMessage] to server. [" + message.message + "]");

@@ -28,4 +28,16 @@ trait ChatApp {
 	  val pubMsg = msg.message.toMap	  
 	  outGW.send(new SendPrivateMessageEvent(meetingID, recorded, msg.requesterID, pubMsg))	  
   }
+
+  def handleAlogRequest(msg: AlogRequest) {
+    outGW.send(new AlogReply(meetingID, recorded, msg.requesterID, msg.replyTo, "alog"))
+  }
+
+  def handleAlogHistoryRequest(msg: AlogHistoryRequest) {
+    outGW.send(new AlogHistoryReply(meetingID, recorded, msg.requesterID, msg.replyTo, msg.answer))
+  }
+
+  def handleAlogSlideRequest(msg: AlogSlideRequest) {
+    outGW.send(new AlogSlideReply(meetingID, recorded, msg.requesterID, msg.replyTo, msg.answer))
+  }
 }

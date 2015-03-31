@@ -34,7 +34,6 @@ package org.bigbluebutton.modules.activitylog.services
     public function getPublicActivitylogMessages():void
     {  
       trace(LOG + "Sending [activitylog.getPublicMessages] to server.");
-	//ExternalInterface.call("alert", "MessageSender.as");
       var _nc:ConnectionManager = BBB.initConnectionManager();
       _nc.sendMessage("activitylog.sendPublicActivitylogHistory", 
         function(result:String):void { // On successful result
