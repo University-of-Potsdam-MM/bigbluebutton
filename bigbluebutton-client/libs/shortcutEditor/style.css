@@ -5,15 +5,6 @@ body{
 body *{
     border-radius: 10px;
 }
-span.mappingHeader {
-    display: inline-block;
-    width:200px;
-    text-align:center;
-    padding: 3px;
-}
-input {
-    width:200px;
-}
 p#JSONOutput, form#mappingLines {
     /*border: solid 1px #42444C;*/
     padding: 10px;
@@ -23,13 +14,31 @@ button {
 }
 div.container{
     background-color: #DBDCDD;
+    width: 1024px;
     padding: 5px;
-    margin: 5px;
+    margin: 5px auto;
     color: #757679;
 }
-div.header > h2{
+h2.header{
     background-color: #42444C;
     color: #E1E1E5;
     margin: 0;
     text-align: center;
+}
+#devinfo{
+    color: green;
+}
+.hide{
+    display: none;
+}
+button.killLine{
+    margin-left: 10px;
+}
+.action{
+	display: inline-block;
+	min-width: 300px;	
+}
+.original{
+	display:inline-block;
+	width: 30px;
 }

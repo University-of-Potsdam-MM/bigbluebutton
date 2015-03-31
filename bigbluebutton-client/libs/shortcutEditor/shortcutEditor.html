@@ -5,32 +5,95 @@
         <title>Big Blue Button Shortcutmapper</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!--einbinden der CSS styles um eine BigBlueButton feeling zu bekommen-->
         <link rel="stylesheet" type="text/css" href="style.css">
-        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-        <script src="mapping.js" ></script>
+        <!--Diese Seite basiert auf JS und JQuery und wird demzufolge nur Clientseitig ausgeführt-->
+        <script type="text/javascript" src="../lib/jquery-1.5.1.min.js"></script>
+        <!--mapping.js enthält alle Funktionen, die beim Klick auf einen Button in diesem Dokument ausgeführt werden-->
+        <script type="text/javascript" src="mapping.js" ></script>
     </head>
     <body>
-        <img src="http://demo.bigbluebutton.org/images/bbb-logo.png" alt="BigBlueButton Logo"/>
-        <h1>Shortcut-Editor</h1>
+        <div class="container">
+            <!--Das logo ist das einzige bild auf dieser Seite mit die "alt" attribut wird es Screenreadertauglich-->
+            <img src="http://demo.bigbluebutton.org/images/bbb-logo.png" alt="BigBlueButton Logo"/>
+            <h1>Shortcut-Editor</h1>
 
-        <button type="button" id="loadCurrentConfig">Lade aktuelle Einstellungen</button>
-   
-        <div class="container" id="createConfig">
-            <div class="header">
-                <h2>Hier können Sie ihre Konfiguration erstellen</h2>
-                <button type="button" id="addMappingLine">Mappingzeile hinzufügen</button><br/>
+            <!--Mit diesem Button ist es möglich, alle aktuellen einstellunge in die Konfigurationsansicht zu laden-->
+            <button type="button" id="loadCurrentConfig">Lade aktuelle Einstellungen</button>
+        </div>
+        <div class="container" id="Anleitung">
+            <h2 class="header">Erklärung zu diesem Modul</h2>
+            <button type="button" id="NutzerhilfeAnzeigen">Nutzerhilfe anzeigen</button>
+            <button type="button" id="DevelopersInfoAnzeigen">Developerinfos anzeigen</button>
+            <div class="hide" id="userinfo">
+                <h3>Nutzerhilfe</h3>
+                <h4>Sprache</h4>
+                <p>
+                    In diesem Modul hast du die Möglichkeit deine eigenen Shortcuts zu erstellen, dazu sind eine paar Informationen wichtig.
+                    BigBlueButton hat vorinstallierte Shortcuts. Diese sind Sprachabhängig, weshalb es Probleme geben kann, wenn du zwischen durch die Sprache wechseln möchtest.
+                </p>
+                <h4>Ein Mapping erstellen</h4>
+                <p>
+                    In der Shortcuthilfe von BigBlueButton werden kürzel wie "Ctrl+Shift+u" stehen, was du also im Mapping unter Original eingeben musst, ist nur das "u" und dein persönlicher Shortcut könnte dann "Ctrl+Shift+1" sein und wieder musst du nur "1" unter Neu Eingeben.
+                    Danach musst du nur noch auf "Konfiguration anzeigen und speichern" klicken und das Mapping wird in deinem Browser gespeichert.
+                </p>
+                <h4>Sicherheitskopie</h4>
+                <p>
+                    Das anzeigen deines Mappings ermöglicht es dir eine Sicherheitskopie anzulegen.
+                    Diese Kannst du nutzen um die einstellungen später wieder herzustellen, sie in einden anderen Browser zu laden, oder sie auf einen anderen PC zu transportieren
+                    Dazu musst du nur einen Textdatei auf deinem PC anlegen und dann einfach den ganzen Text in die Datei kopieren und speichern.
+                </p>
+                <h4>Backups laden</h4>
+                <p>
+                    Wenn du eine Sicherheitskopie angelegt hast, kannst du dein Mapping ganz einfach wieder in den Browser laden, kopieren die Text in das Feld "Backup hier einfügen" und klicke auf "Eingefügtes Backup laden"
+                </p>
             </div>
+            <div class="hide" id="devinfo">
+                <h3>Developerinfos</h3>
+                <h4>Sprache</h4>
+                <p>
+                    Die Shortcuts von BigBlueButton sind in den Locales verankert und können deshalb nicht ohne weiteres verändert werden.
+                    Die Personalisierung wird so gelöst, dass in der Auswertungsfunktion, die die KeyEvents abfängt eine Mapping von persönlichen Keys auf die Locales Keys gemacht wird.
+                </p>
+                <h4>Das Datenformat</h4>
+                <p>
+                    Die angezeigten und gespeicherten Daten sind AS KeyCodes die im JSON Format gespeichert werden.
+                    Die Objekte in der Liste sehen wie folgt aus: {"original":"Keycode","new":Keycode}
+                </p>
+                <h4>Localstorage</h4>
+                <p>
+                    Der JSONString wird im Localstorage abgelegt, der Browser muss dies unterstützen.
+                    Der Schlüssen für den Localstorage wird mit der globalen Variable key in mapping.js definiert.
+                </p>
+                <h4>Modifier</h4>
+                <p>
+                    Alle Modifier werden vom Browser vorgegeben und sind unveränderlich, deshalb können nur die KeyCodes verändert werden.
+                </p>
+            </div>
+        </div>
+
+        <!--Dieser Container befasst sich mit dem erstellen einer Konfiguration-->
+        <div class="container" id="createConfig">
+            <h2 class="header">Hier können Sie ihre Konfiguration erstellen</h2>
+            <!--Mappingzeilen können je nach belieben hinzugefügt werden-->
+            <button type="button" id="addMappingLine">Mappingzeile hinzufügen</button><br/>
+            <!--in dieser Form werden Paare gebildet, wobei das Originalzeichen dem aus den jeweiligen locales entspricht und das neue Zeichen dem gewünschten Shortcut-->
             <form id="mappingLines">
-                <span class="mappingHeader">Original</span> = <span class="mappingHeader">Neu</span><br/>
             </form>
         </div>
 
+        <!--Dieser Container befasst sich damit aus den Eingaben das Mapping zu erstellen, anzuzeigen und es zu speicher.-->
         <div class="container" id="showConfig">
-            <div class="header">
-                <h2>Hier wird Ihre Konfiguration angezeigt</h2>
-                <button type="button" id="generateJSONOutputAndSave">Konfiguration anzeigen und speichern</button>
-            </div>
+            <h2 class="header">Hier wird Ihre Konfiguration angezeigt</h2>
+            <button type="button" id="generateJSONOutputAndSave">Konfiguration anzeigen und speichern</button>
             <p id="JSONOutput"></p>
+        </div>
+
+        <!--Dieser Container dient dazu, ein Backup einzuspielen.-->
+        <div class="container" id="insertBackup">
+            <h2 class="header">Hier können Sie ihr Backup laden.</h2>
+            <input type="text" id="backuploader" placeholder="Backup hier einfügen." />
+            <button type="button" id="loadBackup">Eingefügtes Backup laden</button>
         </div>
     </body>
 </html>

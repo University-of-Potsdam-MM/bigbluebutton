@@ -22,7 +22,6 @@
 	<property name="BBB_MAIN" value="BigBlueButton" />
 	<property name="BROADCAST" value="BroadcastModule" />
 	<property name="CHAT" value="ChatModule" />
-	<property name="ACTIVITYLOG" value="ActivitylogModule" />
 	<property name="EXAMPLE_CHAT" value="ExampleChatModule" />
 	<property name="PRIVATE_NOTES" value="PrivateNotesModule" />
 	<property name="PRESENT" value="PresentModule" />
@@ -41,7 +40,10 @@
 	<property name="POLLING" value="PollingModule" />
 	<property name="LAYOUT" value="LayoutModule" />
 	<property name="USERS" value="UsersModule" />
+	<property name="ACTIVITYLOG" value="ActivitylogModule" />
 	
+
+
 	<xmlproperty file="${SRC_DIR}/conf/locales.xml" collapseAttributes="true"/>
 	
 	<target name="init-ant-contrib">
@@ -135,22 +137,8 @@
 							</exec>	
 			  			</else>
 					</if>	
-
-					<!-- //Hier die beiden IFs gebaut, damit nicht alle Locales immer kompiliert werden, nur DE und EN.-->
-					<if>
-                			<equals arg1="${locale.name}" arg2="en_US"/>
-					<then>
-						<echo message="Compiling locale ${locale.name}"/>
-						<compileLocale locale="${locale.name}" />
-					</then>
-					</if>
-					<if>
-                			<equals arg1="${locale.name}" arg2="de_DE"/>
-					<then>
-						<echo message="Compiling locale ${locale.name}"/>
-						<compileLocale locale="${locale.name}" />
-					</then>
-					</if>
+					<echo message="Compiling locale ${locale.name}"/>
+					<compileLocale locale="${locale.name}" />  
            		</else> 
         	</if>       	   
        </sequential>
@@ -178,8 +166,7 @@
 				  Look into bundles.txt to find out what resources to include here.
 				  http://forums.adobe.com/thread/758619
 				  ralam - sept 20, 2011
-				  
-				-->
+				-->	
 				<include-resource-bundles>SharedResources</include-resource-bundles>
 				<include-resource-bundles>bbbResources</include-resource-bundles>
 				<include-resource-bundles>collections</include-resource-bundles> 
@@ -197,7 +184,7 @@
 			</mxmlc>
 		</sequential>
 	</macrodef>
-	
+		
 	<target name="build-bbb-main" description="Compile BigBlueButton Main">
 		<build-main src="${SRC_DIR}" target="${BBB_MAIN}" />
 		
@@ -225,8 +212,7 @@
 	
 	<target name="build-private-notes" description="Compile private notes Module">
 	        <build-module src="${SRC_DIR}" target="${PRIVATE_NOTES}" />
-	</target>	
-  
+	</target>
   <target name="build-notes" description="Compile Notes Module">
     <build-module src="${SRC_DIR}" target="${NOTES}" />
   </target>
@@ -315,7 +301,6 @@
 			depends="build-bbb-main, build-chat, build-activitylog, build-custom-chat, build-custom-notes, build-present, build-layout, build-broadcast, build-users"
 			description="Compile main, chat, activitylog, build-custom-chat, build-custom-notes, present modules">
 	</target>
-	
 	<!-- just a grouping of modules to compile -->
 	<target name="build-deskshare-phone-video-whiteboard-dyn" 
 			depends="build-deskshare, build-phone, build-video, build-videodock, build-whiteboard, build-notes, build-polling"
@@ -443,6 +428,11 @@
 	</target>	
 
 	<target name="copy-resource-files" >
+    
+    		<copy todir="${BASE_DIR}/client/shortcutEditor" >
+      			<fileset dir="${BASE_DIR}/libs/shortcutEditor" />
+    		</copy>
+    
 		<copy todir="${OUTPUT_DIR}/swfobject/" >
 			<fileset dir="${PROD_RESOURCES_DIR}/swfobject" />
 		</copy>	
@@ -553,8 +543,9 @@
 	                                         build-webcam-preview-standalone, build-webcam-view-standalone, compile-bbb"
                         description="Build BBB client without locales"/>		
 	<target name="cleanandmake" depends="clean-build-all" description="Build BBB client including locales"/>
-
+	
 	<target name="build-poll" depends="init-ant-contrib, build-polling" description="Build only the polling module." />
+	
 	<target name="build-custom-chat" depends="init-ant-contrib, build-example-chat" description="Build the ExampleChatModule only to reduce build time" />
 	<target name="build-custom-notes" depends="init-ant-contrib, build-private-notes" description="Build the PrivateNotesModule only to reduce build time" />
 </project>
